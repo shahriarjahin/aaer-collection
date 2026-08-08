@@ -18,11 +18,10 @@
     display: none !important;
   }
 
-  /* Force display of receipt container, report container, and blank vouchers container during print */
+  /* Force display of receipt container and report container during print */
   .print-only-container,
   .receipt-container,
-  .printable-report-container,
-  .blank-vouchers-print-container {
+  .printable-report-container {
     display: block !important;
     position: relative !important;
     left: 0 !important;
@@ -36,103 +35,9 @@
     border: none !important;
   }
 
-  .a4-blank-voucher-page {
-    page-break-after: always !important;
-    break-after: page !important;
+  .receipt-single-copy {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
-    gap: 1mm !important;
-    height: 285mm !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-    box-shadow: none !important;
-    border: none !important;
-  }
-
-  .receipt-single-copy,
-  .printable-receipt-card {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
-  }
-
-  .blank-voucher-copy {
-    min-height: 0 !important;
-    height: auto !important;
-    padding: 2.5mm !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    font-size: 7pt !important;
-    overflow: hidden !important;
-  }
-
-  .blank-voucher-set {
-    flex: 0 0 137mm !important;
-    height: 137mm !important;
-    min-height: 0 !important;
-    justify-content: space-between !important;
-    gap: 1mm !important;
-    overflow: hidden !important;
-  }
-
-  .blank-voucher-page-divider {
-    flex: 0 0 auto !important;
-    margin-top: 2mm !important;
-    margin-bottom: 2mm !important;
-  }
-
-  .blank-voucher-tear {
-    flex: 0 0 auto !important;
-    margin-top: 1mm !important;
-    margin-bottom: 1mm !important;
-  }
-
-  .blank-voucher-copy header {
-    gap: 1mm !important;
-    padding-bottom: 1mm !important;
-  }
-
-  .blank-voucher-copy header img {
-    width: 11mm !important;
-    height: 11mm !important;
-  }
-
-  .blank-voucher-copy header h1 {
-    font-size: 6.5pt !important;
-  }
-
-  .blank-voucher-copy header p,
-  .blank-voucher-copy header span,
-  .blank-voucher-copy header div {
-    font-size: 5.5pt !important;
-  }
-
-  .blank-voucher-copy > div {
-    padding-top: 1.5mm !important;
-    padding-bottom: 1.5mm !important;
-    gap: 1.5mm !important;
-    font-size: 6.5pt !important;
-  }
-
-  .blank-voucher-copy .grid {
-    gap: 1mm !important;
-  }
-
-  .blank-voucher-copy footer {
-    margin-top: 1mm !important;
-    padding-top: 1mm !important;
-  }
-
-  .blank-voucher-copy footer img {
-    height: 7mm !important;
-  }
-
-  .blank-voucher-copy footer p,
-  .blank-voucher-copy footer div {
-    font-size: 5pt !important;
   }
 
   .receipt-container header,

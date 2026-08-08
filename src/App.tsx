@@ -275,7 +275,9 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="max-w-6xl mx-auto px-4 pt-8">
+      <main className={`max-w-6xl mx-auto px-4 pt-8 ${
+        activeTab === "blank" ? "" : "print-main-hidden"
+      }`}>
         {/* VIEW 1: DATA ENTRY FORM */}
         {activeTab === "form" && (
           <div className="space-y-8 animate-fadeIn">
@@ -400,7 +402,9 @@ export default function App() {
       </main>
 
       {/* Hidden/Target Printable Element used exclusively during @media print */}
-      <div className="print-only-container hidden print:block">
+      <div className={`print-only-container hidden print:block ${
+        activeReportData ? "print-report-target" : "print-receipt-target"
+      }`}>
         {activeReportData ? (
           <PrintableReport
             records={activeReportData.records}
