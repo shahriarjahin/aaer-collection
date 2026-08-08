@@ -428,6 +428,11 @@ export default function App() {
       {/* Receipt Authenticity Verification Modal */}
       <ReceiptVerificationModal
         receiptId={verificationId}
+        onPrintReceipt={(record) => {
+          setActiveReportData(null);
+          setActiveReceipt(record);
+          setTimeout(() => window.print(), 150);
+        }}
         onClose={() => setVerificationId(null)}
       />
 

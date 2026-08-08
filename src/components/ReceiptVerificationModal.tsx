@@ -7,11 +7,13 @@ import { CheckCircle2, XCircle, ShieldCheck, X, Search, FileText, Image } from "
 interface ReceiptVerificationModalProps {
   receiptId: string | null;
   onClose: () => void;
+  onPrintReceipt?: (record: ReceiptRecord) => void;
 }
 
 export const ReceiptVerificationModal: React.FC<ReceiptVerificationModalProps> = ({
   receiptId,
   onClose,
+  onPrintReceipt,
 }) => {
   const [loading, setLoading] = useState(false);
   const [record, setRecord] = useState<ReceiptRecord | null>(null);
@@ -166,6 +168,11 @@ export const ReceiptVerificationModal: React.FC<ReceiptVerificationModalProps> =
                   <p className="font-medium text-slate-700 uppercase">{record.paymentMethod}</p>
                 </div>
 
+                <div>
+                  <span className="text-[10px] font-bold text-slate-400 uppercase">Number of Persons:</span>
+                  <p className="font-medium text-slate-700">{Number(record.numberOfPersons) || 1}</p>
+                </div>
+
                 <div className="col-span-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase">Organization:</span>
                   <p className="font-medium text-slate-700">{record.organization || "N/A"}</p>
@@ -191,6 +198,14 @@ export const ReceiptVerificationModal: React.FC<ReceiptVerificationModalProps> =
                 >
                   <Image className="w-3.5 h-3.5" />
                   Download PNG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onPrintReceipt?.(record)}
+                  className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold inline-flex items-center gap-1.5 transition shadow-xs cursor-pointer"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  Print
                 </button>
               </div>
             </div>

@@ -126,6 +126,15 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
 
           <div className="border-b border-slate-100 pb-1">
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+              Number of Persons
+            </p>
+            <p className="font-semibold text-slate-800 text-[11px] mt-0.5">
+              {Number(receipt.numberOfPersons) || 1}
+            </p>
+          </div>
+
+          <div className="border-b border-slate-100 pb-1">
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
               Voucher Reference
             </p>
             <p className="font-mono text-[11px] text-slate-700 mt-0.5">
@@ -161,8 +170,16 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
             <QRCodeSVG
               value={
                 typeof window !== "undefined"
-                  ? `${window.location.origin}?verifyId=${encodeURIComponent(receipt.id)}`
-                  : `https://aaer.org/verify?id=${receipt.id}`
+                  ? (() => {
+                      const configuredAppUrl = (import.meta as any).env?.VITE_APP_URL;
+                      const verificationUrl = new URL(
+                        configuredAppUrl || window.location.origin
+                      );
+                      verificationUrl.search = `verifyId=${encodeURIComponent(receipt.id)}`;
+                      verificationUrl.hash = "";
+                      return verificationUrl.toString();
+                    })()
+                  : `https://aaer.org/?verifyId=${encodeURIComponent(receipt.id)}`
               }
               size={52}
               level="M"
