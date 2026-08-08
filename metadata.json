@@ -1,0 +1,6 @@
+{
+  "name": "AGM Cash Collection & Receipt Portal",
+  "description": "Cash collection and automated receipt printing portal for AAER AGM",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
