@@ -13,6 +13,7 @@ export interface ReceiptFormData {
   membershipNature: MembershipNature;
   emailAndCell: string;
   amount: string | number;
+  numberOfPersons: string | number;
   amountInWords: string;
   paymentMethod: PaymentMethod;
   chequeNumberAndDate?: string;

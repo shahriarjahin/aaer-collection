@@ -82,6 +82,7 @@ export const ReceiptOcrScannerModal: React.FC<ReceiptOcrScannerModalProps> = ({
       const parsed: ReceiptFormData = {
         name: result.data.name || "",
         amount: String(result.data.amount || "0"),
+        numberOfPersons: 1,
         membershipNature: result.data.membershipNature || "General",
         paymentMethod: result.data.paymentMethod?.toLowerCase().includes("cheque")
           ? "Cheque"
@@ -159,6 +160,7 @@ export const ReceiptOcrScannerModal: React.FC<ReceiptOcrScannerModalProps> = ({
       setExtractedData({
         name: extractedName,
         amount: extractedAmount,
+        numberOfPersons: 1,
         membershipNature: extractedNature,
         paymentMethod: extractedPayment,
         chequeNumberAndDate: "",

@@ -132,6 +132,11 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
     .filter((r) => r.paymentMethod === "Nagad")
     .reduce((sum, r) => sum + (parseFloat(String(r.amount)) || 0), 0);
 
+  const filteredTotalPersons = filteredRecords.reduce(
+    (sum, r) => sum + (Number(r.numberOfPersons) || 1),
+    0
+  );
+
   // Overall totals for all records
   const totalAmount = records.reduce((sum, r) => {
     const val = typeof r.amount === "number" ? r.amount : parseFloat(String(r.amount) || "0");
@@ -186,6 +191,7 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
       "Membership Nature",
       "Contact",
       "Amount (Tk)",
+      "Number of Persons",
       "Payment Method",
       "Cheque No / Date",
       "Bank",
@@ -199,6 +205,7 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
       r.membershipNature,
       `"${(r.emailAndCell || "").replace(/"/g, '""')}"`,
       r.amount,
+      r.numberOfPersons,
       r.paymentMethod,
       `"${(r.chequeNumberAndDate || "").replace(/"/g, '""')}"`,
       `"${(r.bankName || "").replace(/"/g, '""')}"`,
@@ -298,7 +305,7 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
               {filteredRecords.length} Payees
             </p>
             <p className="text-[10px] text-slate-500 mt-0.5">
-              Stored in Supabase
+              {filteredTotalPersons} Persons | Stored in Supabase
             </p>
           </div>
         </div>
@@ -422,6 +429,9 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
             <span className="font-mono font-bold text-indigo-700 text-sm">
               ৳ {filteredTotalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
+            <span className="ml-3 text-slate-600">
+              Persons: <span className="font-mono text-indigo-700">{filteredTotalPersons}</span>
+            </span>
           </p>
         </div>
       </div>
@@ -481,6 +491,7 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
                 <th className="py-2.5 px-3">Payee Name & Org</th>
                 <th className="py-2.5 px-3">Membership Type</th>
                 <th className="py-2.5 px-3 text-right">Amount (Tk.)</th>
+                <th className="py-2.5 px-3 text-center">Persons</th>
                 <th className="py-2.5 px-3">Payment Method</th>
                 <th className="py-2.5 px-3 text-center">Actions</th>
               </tr>
@@ -530,6 +541,9 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
                     </td>
                     <td className="py-2.5 px-3 text-right font-mono font-bold text-slate-900">
                       ৳ {amt.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-2.5 px-3 text-center font-mono font-bold text-slate-900">
+                      {Number(r.numberOfPersons) || 1}
                     </td>
                     <td className="py-2.5 px-3">
                       <span

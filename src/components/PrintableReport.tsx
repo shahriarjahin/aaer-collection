@@ -28,6 +28,11 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
     return sum + (isNaN(val) ? 0 : val);
   }, 0);
 
+  const totalPersons = records.reduce(
+    (sum, r) => sum + (Number(r.numberOfPersons) || 1),
+    0
+  );
+
   const cashTotal = records
     .filter((r) => r.paymentMethod === "Cash")
     .reduce((sum, r) => {
@@ -109,6 +114,10 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
               ৳ {totalAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
             </span>
           </div>
+          <div>
+            <span className="text-[10px] text-slate-500 uppercase font-bold block">Total Persons</span>
+            <span className="font-mono font-bold text-slate-800">{totalPersons}</span>
+          </div>
         </div>
       </div>
 
@@ -125,12 +134,13 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
               <th className="py-2 px-2 border-r border-slate-300">Membership</th>
               <th className="py-2 px-2 border-r border-slate-300">Method</th>
               <th className="py-2 px-2 text-right">Amount (Tk.)</th>
+              <th className="py-2 px-2 text-center">Persons</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
             {records.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-6 text-center text-slate-400 italic">
+                <td colSpan={9} className="py-6 text-center text-slate-400 italic">
                   No collection records found for the selected filter criteria.
                 </td>
               </tr>
@@ -177,6 +187,9 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                     </td>
                     <td className="py-1.5 px-2 text-right font-mono font-bold text-slate-900">
                       ৳ {amt.toLocaleString("en-IN", { minimumFractionDigits: 2 })}
+                    </td>
+                    <td className="py-1.5 px-2 text-center font-mono font-bold text-slate-900">
+                      {Number(r.numberOfPersons) || 1}
                     </td>
                   </tr>
                 );

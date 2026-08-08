@@ -101,6 +101,7 @@ export default function App() {
           prev.organization === formData.organization &&
           prev.emailAndCell === formData.emailAndCell &&
           prev.amount === formData.amount &&
+          prev.numberOfPersons === formData.numberOfPersons &&
           prev.paymentMethod === formData.paymentMethod &&
           prev.chequeNumberAndDate === formData.chequeNumberAndDate &&
           prev.bankName === formData.bankName &&
@@ -158,7 +159,7 @@ export default function App() {
             />
             <div>
               <h1 className="text-sm md:text-base font-bold tracking-tight text-slate-900 leading-snug">
-                AAER AGM Portal
+                AAER Collection Portal
               </h1>
               <p className="text-[11px] text-slate-500 font-medium">
                 Alumni Association of Agricultural Extension & Rural Development — GAU ESTD. 2017

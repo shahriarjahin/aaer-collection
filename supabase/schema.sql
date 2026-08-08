@@ -11,6 +11,7 @@ create table if not exists public.receipts (
   membership_nature text not null default 'General',
   email_and_cell text not null default '',
   amount numeric(12, 2) not null check (amount > 0),
+  number_of_persons integer not null default 1 check (number_of_persons > 0),
   amount_in_words text not null default '',
   payment_method text not null default 'Cash',
   cheque_number_and_date text not null default '',
@@ -30,3 +31,13 @@ create policy "Public receipt access"
   with check (true);
 
 create index if not exists receipts_issued_at_idx on public.receipts (issued_at desc);
+
+alter table public.receipts
+  add column if not exists number_of_persons integer not null default 1;
+
+alter table public.receipts
+  drop constraint if exists receipts_number_of_persons_positive;
+
+alter table public.receipts
+  add constraint receipts_number_of_persons_positive
+  check (number_of_persons > 0);

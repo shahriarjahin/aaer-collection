@@ -13,11 +13,14 @@ interface DataEntryFormProps {
 }
 
 const PRESET_AMOUNTS = [
-  { label: "Tk. 500 (AGM)", value: 500 },
-  { label: "Tk. 1,000 (General)", value: 1000 },
-  { label: "Tk. 2,000 (Conference)", value: 2000 },
-  { label: "Tk. 5,000 (Life Member)", value: 5000 },
-  { label: "Tk. 10,000 (Donor)", value: 10000 },
+  { label: "Tk. 500 (Joob Seeker)", value: 500 },
+  { label: "Tk. 2,500 (General)", value: 2500 },
+  { label: "Tk. 3,300 (1 guest)", value: 3300 },
+  { label: "Tk. 4,100 (2 guests)", value: 4100 },
+  { label: "Tk. 4,900 (3 guests)", value: 4900 },
+  { label: "Tk. 5,700 (4 guests)", value: 5700 },
+  { label: "Tk. 3,000 (Life Member)", value: 3000 },
+  { label: "Tk. 10,000 ", value: 10000 },
 ];
 
 export const DataEntryForm: React.FC<DataEntryFormProps> = ({
@@ -33,6 +36,7 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
     membershipNature: "General",
     emailAndCell: "",
     amount: "",
+    numberOfPersons: 1,
     amountInWords: "",
     paymentMethod: "Cash",
     chequeNumberAndDate: "",
@@ -118,6 +122,7 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
       membershipNature: "General",
       emailAndCell: "",
       amount: "",
+      numberOfPersons: 1,
       amountInWords: "",
       paymentMethod: "Cash",
       chequeNumberAndDate: "",
@@ -337,6 +342,21 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
             </div>
           </div>
         </div>
+        <div className="relative col-span-1">
+              <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+                Number of Persons <span className="text-rose-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="numberOfPersons"
+                required
+                min="1"
+                step="1"
+                value={formData.numberOfPersons}
+                onChange={handleChange}
+                className="w-full px-3 py-2 bg-white border border-slate-200 rounded-md text-base font-bold text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono"
+              />
+            </div>
 
         {/* Row 3: Amount (Tk.) with Presets */}
         <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg space-y-3">
@@ -381,7 +401,9 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
               />
             </div>
 
-            <div className="col-span-2">
+            
+
+            <div className="col-span-1">
               <div className="text-xs italic text-indigo-700 bg-indigo-50/80 border border-indigo-100 rounded-md px-3 py-2 font-medium min-h-[38px] flex items-center">
                 {formData.amountInWords || "Amount in words auto-calculates..."}
               </div>
