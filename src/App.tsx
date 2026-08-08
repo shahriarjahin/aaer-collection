@@ -411,12 +411,12 @@ export default function App() {
             filterLabel={activeReportData.filterLabel}
             todayDateFormatted={todayFormatted}
           />
-        ) : (
+        ) : (activeReceipt || draftReceipt) ? (
           <ReceiptComponent
             receipt={activeReceipt || draftReceipt}
             todayDateFormatted={todayFormatted}
           />
-        )}
+        ) : null}
       </div>
 
       {/* Admin Passcode Authentication Modal */}

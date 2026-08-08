@@ -35,6 +35,110 @@
     border: none !important;
   }
 
+  .blank-vouchers-print-container {
+    display: block !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .a4-blank-voucher-page {
+    page: blank-vouchers;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 285mm !important;
+    max-height: 285mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    gap: 1mm !important;
+    overflow: hidden !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .a4-blank-voucher-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .blank-voucher-set {
+    flex: 0 0 137mm !important;
+    height: 137mm !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 1mm !important;
+    overflow: hidden !important;
+  }
+
+  .blank-voucher-copy {
+    box-sizing: border-box !important;
+    flex: 0 0 66mm !important;
+    height: 66mm !important;
+    min-height: 0 !important;
+    padding: 2mm !important;
+    overflow: hidden !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 6.5pt !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .blank-voucher-copy header {
+    gap: 1mm !important;
+    padding-bottom: 1mm !important;
+  }
+
+  .blank-voucher-copy header img {
+    width: 11mm !important;
+    height: 11mm !important;
+  }
+
+  .blank-voucher-copy header h1 {
+    font-size: 6pt !important;
+  }
+
+  .blank-voucher-copy header p,
+  .blank-voucher-copy header span,
+  .blank-voucher-copy header div {
+    font-size: 5pt !important;
+  }
+
+  .blank-voucher-copy > .blank-voucher-body {
+    padding-top: 1mm !important;
+    padding-bottom: 1mm !important;
+    gap: 1mm !important;
+    font-size: 6pt !important;
+  }
+
+  .blank-voucher-copy footer {
+    margin-top: 1mm !important;
+    padding-top: 1mm !important;
+  }
+
+  .blank-voucher-copy footer img {
+    height: 6mm !important;
+  }
+
+  .blank-voucher-copy footer p,
+  .blank-voucher-copy footer div {
+    font-size: 4.5pt !important;
+  }
+
+  .blank-voucher-tear,
+  .blank-voucher-page-divider {
+    flex: 0 0 auto !important;
+    margin-top: 1mm !important;
+    margin-bottom: 1mm !important;
+  }
+
   .receipt-single-copy {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
@@ -67,6 +171,11 @@
   }
 
   @page {
+    size: A4 portrait;
+    margin: 6mm 8mm 6mm 8mm;
+  }
+
+  @page blank-vouchers {
     size: A4 portrait;
     margin: 6mm 8mm 6mm 8mm;
   }
