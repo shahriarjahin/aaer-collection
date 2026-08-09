@@ -130,11 +130,17 @@ export async function sendReceiptEmail(
         receivedBy: record.receivedBy,
       }),
     });
-    const emailResult = await emailResponse.json().catch(() => ({}));
+    const emailResult = await emailResponse.json().catch(() => null);
     if (emailResponse.ok && emailResult.success && !emailResult.skipped) {
       return { status: "sent" };
     }
-    return { status: "failed", error: emailResult.error || "Receipt email delivery failed." };
+    if (emailResult?.error) {
+      return { status: "failed", error: emailResult.error };
+    }
+    return {
+      status: "failed",
+      error: `Email API returned HTTP ${emailResponse.status} (${emailResponse.statusText || "unknown error"}). Check the server deployment logs and environment variables.`,
+    };
   } catch (error) {
     return {
       status: "failed",

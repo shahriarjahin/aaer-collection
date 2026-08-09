@@ -10,10 +10,19 @@ const supabaseAdmin = () => {
 
 export async function handleReceiptEmail(req: any, res: any) {
   try {
-    const resendKey = process.env.RESEND_API_KEY;
-    const fromAddress = process.env.RESEND_FROM_EMAIL;
-    if (!resendKey || !fromAddress) {
-      return res.status(503).json({ success: false, error: "Receipt email service is not configured." });
+    const resendKey = process.env.RESEND_API_KEY?.trim();
+    const fromAddress = process.env.RESEND_FROM_EMAIL?.trim();
+    const missingVariables = [
+      !resendKey && "RESEND_API_KEY",
+      !fromAddress && "RESEND_FROM_EMAIL",
+      !(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && "SUPABASE_URL",
+      !process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() && "SUPABASE_SERVICE_ROLE_KEY",
+    ].filter(Boolean);
+    if (missingVariables.length > 0) {
+      return res.status(503).json({
+        success: false,
+        error: `Receipt email service is not configured. Missing server variable(s): ${missingVariables.join(", ")}. Add them to the deployment environment and redeploy.`,
+      });
     }
 
     const authorization = String(req.headers.authorization || "");
