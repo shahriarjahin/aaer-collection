@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { downloadReceiptAsPng } from "../lib/recordsStore";
 import { isAdminLoggedIn } from "../lib/adminAuth";
-import { Printer, FileText, ArrowLeft, Image, Lock } from "lucide-react";
+import { Printer, FileText, ArrowLeft, Image } from "lucide-react";
 
 interface BlankVouchersPrintProps {
   onBack?: () => void;
@@ -12,6 +12,8 @@ interface SingleBlankCopyProps {
   copyType: "PAYEE'S COPY" | "OFFICE COPY";
   voucherNumStr: string | null;
 }
+
+type VoucherLayout = "portrait" | "landscape";
 
 const SingleBlankCopy: React.FC<SingleBlankCopyProps> = ({ copyType, voucherNumStr }) => {
   return (
@@ -65,9 +67,21 @@ const SingleBlankCopy: React.FC<SingleBlankCopyProps> = ({ copyType, voucherNumS
           <div className="flex-1 border-b border-dotted border-slate-400 h-3"></div>
         </div>
 
-        <div className="flex items-baseline gap-2">
-          <span className="shrink-0 font-bold text-slate-700">Organization / Designation / Phone:</span>
-          <div className="flex-1 border-b border-dotted border-slate-400 h-3"></div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="flex items-baseline gap-1.5">
+            <span className="shrink-0 font-bold text-slate-700">Organization:</span>
+            <div className="flex-1 border-b border-dotted border-slate-400 h-3"></div>
+          </div>
+
+          <div className="flex items-baseline gap-1.5">
+            <span className="shrink-0 font-bold text-slate-700">Designation:</span>
+            <div className="flex-1 border-b border-dotted border-slate-400 h-3"></div>
+          </div>
+
+          <div className="flex items-baseline gap-1.5">
+            <span className="shrink-0 font-bold text-slate-700">Phone:</span>
+            <div className="flex-1 border-b border-dotted border-slate-400 h-3"></div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-0.5">
@@ -154,6 +168,8 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
   const [isCustomQuantity, setIsCustomQuantity] = useState<boolean>(false);
   const [includeVoucherNum, setIncludeVoucherNum] = useState<boolean>(true);
   const [startVoucherNum, setStartVoucherNum] = useState<number>(101);
+  const [layout, setLayout] = useState<VoucherLayout>("portrait");
+  const isLandscape = layout === "landscape";
 
   const handlePrint = () => {
     const doPrint = () => {
@@ -173,7 +189,10 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
     const doDownload = () => {
       const el = document.getElementById("blank-voucher-page-0");
       if (el) {
-        downloadReceiptAsPng(el, "AAER_Blank_Vouchers.png");
+        downloadReceiptAsPng(
+          el,
+          `AAER_Blank_Vouchers_${isLandscape ? "Landscape" : "Portrait"}.png`
+        );
       }
     };
 
@@ -245,6 +264,19 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
             )}
           </div>
 
+          <div className="flex items-center gap-2 text-xs">
+            <label htmlFor="blank-voucher-layout" className="font-semibold text-slate-700">Layout:</label>
+            <select
+              id="blank-voucher-layout"
+              value={layout}
+              onChange={(e) => setLayout(e.target.value as VoucherLayout)}
+              className="px-2.5 py-1.5 border border-slate-300 rounded-lg bg-slate-50 font-medium text-xs focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="portrait">Portrait: 2 Sets / Page</option>
+              <option value="landscape">Landscape: Payee + Office Side by Side</option>
+            </select>
+          </div>
+
           <label className="flex items-center gap-1.5 cursor-pointer text-xs font-semibold text-slate-700 bg-slate-50 px-2.5 py-1.5 border border-slate-200 rounded-lg hover:bg-slate-100 select-none">
             <input
               type="checkbox"
@@ -270,10 +302,10 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
           <button
             onClick={handleDownloadPng}
             className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-            title="Download Blank Voucher Page as PNG Image"
+            title={`Download ${isLandscape ? "landscape" : "portrait"} blank voucher page as PNG image`}
           >
             <Image className="w-4 h-4" />
-            Download PNG
+            Download {isLandscape ? "Landscape" : "Portrait"} PNG
           </button>
 
           <button
@@ -281,7 +313,7 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
             className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-sm transition flex items-center gap-2 cursor-pointer"
           >
             <Printer className="w-4 h-4" />
-            Print Blank Vouchers
+            Print {isLandscape ? "Landscape" : "Portrait"} Vouchers
           </button>
         </div>
       </div>
@@ -290,7 +322,7 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
       <div className="blank-vouchers-print-container space-y-8">
         {Array.from({ length: quantity }).map((_, index) => {
           const firstVoucherNumStr = includeVoucherNum
-            ? `REC-2026-BLANK-${String(startVoucherNum + index * 2).padStart(4, "0")}`
+            ? `REC-2026-BLANK-${String(startVoucherNum + index * (isLandscape ? 1 : 2)).padStart(4, "0")}`
             : null;
           const secondVoucherNumStr = includeVoucherNum
             ? `REC-2026-BLANK-${String(startVoucherNum + index * 2 + 1).padStart(4, "0")}`
@@ -300,35 +332,47 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
             <div
               key={index}
               id={`blank-voucher-page-${index}`}
-              className={`a4-blank-voucher-page bg-white p-4 max-w-3xl mx-auto flex flex-col justify-between ${
+              className={`a4-blank-voucher-page ${isLandscape ? "a4-blank-voucher-landscape" : ""} bg-white p-4 max-w-3xl mx-auto flex flex-col justify-between ${
                 index > 0 ? "print:page-break-before" : ""
               }`}
             >
-              <div className="blank-voucher-set flex-1 flex flex-col justify-center gap-1.5">
-                <SingleBlankCopy copyType="PAYEE'S COPY" voucherNumStr={firstVoucherNumStr} />
-                <div className="blank-voucher-tear my-1 border-t border-dashed border-slate-300 flex items-center justify-center">
-                  <span className="bg-white px-2 text-[8px] font-mono text-slate-400 uppercase tracking-widest select-none">
-                     {firstVoucherNumStr ? `(#${firstVoucherNumStr})` : ""}
-                  </span>
+              {isLandscape ? (
+                <div className="blank-voucher-landscape-set flex items-center justify-center gap-2">
+                  <SingleBlankCopy copyType="PAYEE'S COPY" voucherNumStr={firstVoucherNumStr} />
+                  <div className="blank-voucher-landscape-tear border-l border-dashed border-slate-400 h-full flex items-center justify-center">
+                    <span className="bg-white px-1 text-[8px] font-mono text-slate-400 uppercase tracking-widest select-none [writing-mode:vertical-rl]">
+                      CUT
+                    </span>
+                  </div>
+                  <SingleBlankCopy copyType="OFFICE COPY" voucherNumStr={firstVoucherNumStr} />
                 </div>
-                <SingleBlankCopy copyType="OFFICE COPY" voucherNumStr={firstVoucherNumStr} />
-              </div>
+              ) : (
+                <>
+                  <div className="blank-voucher-set flex-1 flex flex-col justify-center gap-1.5">
+                    <SingleBlankCopy copyType="PAYEE'S COPY" voucherNumStr={firstVoucherNumStr} />
+                    <div className="blank-voucher-tear my-1 border-t border-dashed border-slate-300 flex items-center justify-center">
+                      <span className="bg-white px-2 text-[8px] font-mono text-slate-400 uppercase tracking-widest select-none">
+                        {firstVoucherNumStr ? `(#${firstVoucherNumStr})` : ""}
+                      </span>
+                    </div>
+                    <SingleBlankCopy copyType="OFFICE COPY" voucherNumStr={firstVoucherNumStr} />
+                  </div>
 
-              <div className="blank-voucher-page-divider my-3 border-t-[3px] border-slate-800 relative flex items-center justify-center">
-                <span className="bg-white px-4 text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1 select-none">
-      
-                </span>
-              </div>
+                  <div className="blank-voucher-page-divider my-3 border-t-[3px] border-slate-800 relative flex items-center justify-center">
+                    <span className="bg-white px-4 text-[10px] font-bold text-slate-900 uppercase tracking-widest flex items-center gap-1 select-none"></span>
+                  </div>
 
-              <div className="blank-voucher-set flex-1 flex flex-col justify-center gap-1.5">
-                <SingleBlankCopy copyType="PAYEE'S COPY" voucherNumStr={secondVoucherNumStr} />
-                <div className="blank-voucher-tear my-1 border-t border-dashed border-slate-300 flex items-center justify-center">
-                  <span className="bg-white px-2 text-[8px] font-mono text-slate-400 uppercase tracking-widest select-none">
-                     {secondVoucherNumStr ? `(#${secondVoucherNumStr})` : ""}
-                  </span>
-                </div>
-                <SingleBlankCopy copyType="OFFICE COPY" voucherNumStr={secondVoucherNumStr} />
-              </div>
+                  <div className="blank-voucher-set flex-1 flex flex-col justify-center gap-1.5">
+                    <SingleBlankCopy copyType="PAYEE'S COPY" voucherNumStr={secondVoucherNumStr} />
+                    <div className="blank-voucher-tear my-1 border-t border-dashed border-slate-300 flex items-center justify-center">
+                      <span className="bg-white px-2 text-[8px] font-mono text-slate-400 uppercase tracking-widest select-none">
+                        {secondVoucherNumStr ? `(#${secondVoucherNumStr})` : ""}
+                      </span>
+                    </div>
+                    <SingleBlankCopy copyType="OFFICE COPY" voucherNumStr={secondVoucherNumStr} />
+                  </div>
+                </>
+              )}
             </div>
           );
         })}

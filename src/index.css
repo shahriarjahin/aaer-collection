@@ -6,6 +6,53 @@
   }
 }
 
+.a4-blank-voucher-landscape {
+  box-sizing: border-box;
+  width: 297mm;
+  max-width: none;
+  min-height: 210mm;
+  height: 210mm;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.a4-blank-voucher-landscape .blank-voucher-landscape-set {
+  width: 100%;
+  height: 102mm;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 2mm;
+}
+
+.a4-blank-voucher-landscape .blank-voucher-copy {
+  box-sizing: border-box;
+  flex: 0 0 calc(50% - 2mm);
+  width: calc(50% - 2mm);
+  height: 102mm;
+  display: flex;
+  flex-direction: column;
+}
+
+.a4-blank-voucher-landscape .blank-voucher-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 3mm;
+  padding-top: 3mm;
+  padding-bottom: 3mm;
+}
+
+.a4-blank-voucher-landscape .blank-voucher-copy footer {
+  margin-top: auto;
+}
+
+.a4-blank-voucher-landscape .blank-voucher-landscape-tear {
+  flex: 0 0 4mm;
+  height: 102mm;
+}
+
 /* Print Styles */
 @media print {
   /* Hide all interactive app wrapper elements, navigation, forms, history tables */
@@ -64,6 +111,55 @@
   .a4-blank-voucher-page:last-child {
     page-break-after: auto !important;
     break-after: auto !important;
+  }
+
+  .a4-blank-voucher-landscape {
+    page: blank-vouchers-landscape;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    height: 198mm !important;
+    max-height: 198mm !important;
+  }
+
+  .a4-blank-voucher-landscape .blank-voucher-landscape-set {
+    width: 100% !important;
+    height: 102mm !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 2mm !important;
+  }
+
+  .a4-blank-voucher-landscape .blank-voucher-copy {
+    flex: 0 0 calc(50% - 2mm) !important;
+    width: calc(50% - 2mm) !important;
+    height: 102mm !important;
+  }
+
+  .a4-blank-voucher-landscape .blank-voucher-landscape-tear {
+    flex: 0 0 4mm !important;
+    height: 102mm !important;
+  }
+
+  .a4-blank-voucher-landscape .blank-voucher-copy {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  .a4-blank-voucher-landscape .blank-voucher-body {
+    flex: 1 1 auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    gap: 3mm !important;
+    padding-top: 3mm !important;
+    padding-bottom: 3mm !important;
+  }
+
+  .a4-blank-voucher-landscape .blank-voucher-copy footer {
+    margin-top: auto !important;
   }
 
   .blank-voucher-set {
@@ -177,6 +273,11 @@
 
   @page blank-vouchers {
     size: A4 portrait;
+    margin: 6mm 8mm 6mm 8mm;
+  }
+
+  @page blank-vouchers-landscape {
+    size: A4 landscape;
     margin: 6mm 8mm 6mm 8mm;
   }
 }
