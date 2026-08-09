@@ -9,14 +9,16 @@ An official, secure full-stack web application designed for the **Alumni Associa
 ### 1. 📄 Official Money Receipt Voucher Generation
 * **Sequential Voucher Numbers**: Automatic formatted voucher IDs (e.g., `REC-2026-0001`, `REC-2026-0002`).
 * **Detailed Collection Entry**:
-  * Payer Name & Organization/Designation
+   * Payee Name, Organization, Email, and Phone
   * Amount in BDT (৳) with automatic **Taka in Words** conversion
   * Membership Categories (Life Member, Annual Member, Executive Fee, Donation, Special Fund, General Collection)
   * Payment Methods (Cash, bKash, Nagad, Bank Transfer, Cheque) & Transaction Reference ID
-* **Print-Optimized Voucher**: A4/A5 receipt layout complete with official organization header, logo, and treasurer signature.
+* **Print-Optimized Voucher**: A4 receipt layout complete with official organization header, logo, QR code, and treasurer signature.
 
-### 2. 🔐 Admin Security & Passcode Authorization
-* **Authorized Printing & Deletion**: Requires Admin passcode authentication before generating receipts or modifying records.
+### 2. 🔐 Approved User Authentication
+* **Supabase Auth Login**: Users must sign in before entering or issuing receipts.
+* **Approval Required**: Only users listed in `public.approved_users` with `approved = true` can create or access receipt records.
+* **Admin Passcode**: The separate Admin PIN protects restricted actions such as reports, deletion, and blank-voucher printing.
 * **Default Passcode**: `1234`
 * **Passcode Customization**:
   * **Via UI**: Click **Admin Login** in the top navigation bar, enter the current PIN, and select **Change Passcode?** to set a new PIN.
@@ -24,7 +26,7 @@ An official, secure full-stack web application designed for the **Alumni Associa
 
 ### 3. 🔍 QR Code Authenticity Verification
 * **Embedded QR Code**: Every printed receipt features a unique QR code pointing to the online verification endpoint (`?verifyId=REC-2026-XXXX`).
-* **Verification Modal**: Scanning the QR code or searching via the **Verify QR** button queries the central database to check if the receipt is genuine, displaying verified payer details and issue dates to prevent forgery.
+* **Public Verification**: Anyone can scan the QR code and verify a receipt without logging in. Only safe verification fields are returned; email, phone, and payment-sensitive details remain private.
 
 ### 4. 📊 Collection History & Report Dashboard
 * **Real-time Filter & Search**: Search collections by Voucher No, Payer Name, or Organization.
@@ -43,6 +45,12 @@ An official, secure full-stack web application designed for the **Alumni Associa
 * **Supabase Persistence**: Receipt records are stored in a hosted PostgreSQL database.
 * **Database-generated IDs**: Receipt numbers are generated safely by a PostgreSQL sequence.
 * **Vercel & Cloud Deployment**: Configured with `vercel.json` and API route proxying.
+
+### 8. ✉️ Automatic Email Delivery
+* **Automatic Send**: After a receipt is saved, the payee receives an email when a valid email address is entered.
+* **PDF Attachment**: The email includes a branded payee-copy PDF with the receipt details, logo, signature, and verification QR code.
+* **Resend from History**: Staff can resend a receipt from the History tab.
+* **Delivery Status**: The entry form and History tab show whether delivery succeeded, was skipped, or failed.
 
 ---
 
@@ -81,14 +89,45 @@ An official, secure full-stack web application designed for the **Alumni Associa
 
 ## ⚙️ Configure Supabase
 
-Create a Supabase project, open **SQL Editor**, paste the complete contents of [`supabase/schema.sql`](supabase/schema.sql), and click **Run**. Confirm that `public.receipts` appears under **Table Editor**. Then add these variables to `.env` locally or to your Vercel project settings:
+Create a Supabase project, open **SQL Editor**, paste the complete contents of [`supabase/schema.sql`](supabase/schema.sql), and click **Run**. Confirm that `public.receipts`, `public.approved_users`, and the `verify_receipt` function exist.
+
+In Supabase Authentication:
+
+1. Disable public sign-ups.
+2. Create users manually, or use an administrator-controlled invitation process.
+3. Approve each user by inserting their Auth user ID:
+
+```sql
+insert into public.approved_users (user_id, email, full_name, approved)
+values ('USER_UUID_FROM_SUPABASE', 'user@example.com', 'User Name', true);
+```
+
+The browser uses these variables:
 
 ```env
 VITE_SUPABASE_URL="https://your-project.supabase.co"
 VITE_SUPABASE_ANON_KEY="your-anon-key"
 ```
 
-The browser uses the Supabase anon key and the SQL file enables the required RLS policy for the public receipt verification workflow. Do not put a Supabase service-role key in `VITE_` variables.
+The SQL file enables RLS for approved receipt users and creates a restricted public verification function. Do not put a Supabase service-role key in any `VITE_` variable.
+
+## ✉️ Configure Resend Email
+
+Create a [Resend](https://resend.com) account, add your sending domain, and complete the DNS verification steps for SPF and DKIM. The sender address must use a verified domain, for example `receipts@example.com`.
+
+Add these server-only variables locally in `.env` and in Vercel Project Settings → Environment Variables:
+
+```env
+RESEND_API_KEY="re_your_resend_api_key"
+RESEND_FROM_EMAIL="receipts@your-verified-domain.com"
+SUPABASE_URL="https://your-project.supabase.co"
+SUPABASE_SERVICE_ROLE_KEY="your-service-role-key"
+VITE_APP_URL="https://your-deployed-domain.com"
+```
+
+`RESEND_API_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_URL` are server-side values. Never expose them with a `VITE_` prefix and never commit `.env` to source control. Redeploy after changing Vercel environment variables.
+
+The email endpoint is implemented in [`server/receiptEmail.ts`](server/receiptEmail.ts), registered by [`api/index.ts`](api/index.ts), and called by [`src/lib/recordsStore.ts`](src/lib/recordsStore.ts).
 
 ---
 
@@ -113,15 +152,19 @@ The browser uses the Supabase anon key and the SQL file enables the required RLS
 │   │   ├── DataEntryForm.tsx            # Money receipt collection entry form
 │   │   ├── ReceiptComponent.tsx         # Printable money receipt layout with QR Code
 │   │   ├── ReceiptVerificationModal.tsx # QR Verification & Authenticity checker modal
+│   │   ├── UserLoginScreen.tsx             # Supabase Auth login screen
 │   │   ├── RecordsHistory.tsx           # Collection history, search, and audit dashboard
 │   │   └── PrintableReport.tsx          # Formal summary ledger report layout
 │   ├── lib/
 │   │   ├── adminAuth.ts                 # Admin passcode logic & session state
+│   │   ├── auth.ts                         # Supabase Auth and approval helpers
+│   │   ├── recordsStore.ts                 # Receipt persistence and email trigger
 │   │   └── supabase.ts                  # Supabase client and configuration checks
 │   ├── App.tsx                          # Main application layout & state coordinator
 │   └── main.tsx                         # React entrypoint
 ├── supabase/schema.sql           # Supabase receipt table and RLS policy
 ├── server.ts                    # Node Express backend server
+├── server/receiptEmail.ts       # Resend email and branded PDF generation
 ├── vercel.json                  # Serverless deployment configuration for Vercel
 └── README.md                    # Project guide and documentation
 ```
