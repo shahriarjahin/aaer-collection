@@ -1,5 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
-import PDFDocument from "pdfkit/js/pdfkit.standalone"; // Fixes PDFKit bundler/font issues in Vercel
+import PDFDocument from "pdfkit"; // Fixes PDFKit bundler/font issues in Vercel
+import QRCode from "qrcode";
+import fs from "node:fs";
+import path from "node:path";
 
 const supabaseAdmin = () => {
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -53,6 +56,8 @@ export async function handleReceiptEmail(req: any, res: any) {
       name,
       organization,
       phone,
+      membershipNature,
+      numberOfPersons,
       amount,
       amountInWords,
       paymentMethod,
@@ -75,6 +80,8 @@ export async function handleReceiptEmail(req: any, res: any) {
       name,
       organization,
       phone,
+      membershipNature,
+      numberOfPersons,
       amount,
       amountInWords,
       paymentMethod,
@@ -132,6 +139,8 @@ interface ReceiptPdfData {
   name: string;
   organization?: string;
   phone?: string;
+  membershipNature?: string;
+  numberOfPersons?: string | number;
   amount: string | number;
   amountInWords?: string;
   paymentMethod?: string;
@@ -139,43 +148,102 @@ interface ReceiptPdfData {
 }
 
 function createReceiptPdf(data: ReceiptPdfData): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const document = new PDFDocument({ size: "A4", margin: 48, info: { Title: `AAER Receipt ${data.id}` } });
-    const chunks: Buffer[] = [];
+  return QRCode.toBuffer(getVerificationUrl(data.id), { type: "png", width: 180, margin: 1 })
+    .then((qrBuffer) => new Promise<Buffer>((resolve, reject) => {
+      const document = new PDFDocument({ size: "A4", margin: 36, info: { Title: `AAER Receipt ${data.id}` } });
+      const chunks: Buffer[] = [];
 
-    document.on("data", (chunk: Buffer) => chunks.push(chunk));
-    document.on("end", () => resolve(Buffer.concat(chunks)));
-    document.on("error", reject);
+      document.on("data", (chunk: Buffer) => chunks.push(chunk));
+      document.on("end", () => resolve(Buffer.concat(chunks)));
+      document.on("error", reject);
 
-    const amountText = `BDT ${Number(data.amount || 0).toLocaleString("en-BD", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })}`;
+      const amountText = `BDT ${Number(data.amount || 0).toLocaleString("en-BD", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })}`;
+      const left = document.page.margins.left;
+      const top = document.page.margins.top;
+      const pageWidth = document.page.width - left - document.page.margins.right;
+      const right = left + pageWidth;
+      const copyHeight = 770;
+      const innerLeft = left + 14;
+      const innerWidth = pageWidth - 28;
+      const columnGap = 14;
+      const columnWidth = (innerWidth - columnGap) / 2;
 
-    document.fontSize(18).font("Helvetica-Bold").text("AAER MONEY RECEIPT", { align: "center" });
-    document.moveDown(0.4);
-    document.fontSize(10).font("Helvetica").text("Alumni Association of Agricultural Extension & Rural Development (AAER)", { align: "center" });
-    document.text("Department of Agricultural Extension & Rural Development, GAU, Gazipur", { align: "center" });
-    document.moveDown(1);
-    document.font("Helvetica-Bold").text(`Receipt No: ${data.id}`);
-    document.font("Helvetica").text(`Date: ${new Date().toLocaleDateString("en-GB")}`);
-    document.moveDown(0.8);
-    document.font("Helvetica-Bold").text("Thank you for your payment!");
-    document.font("Helvetica").text(`We have successfully received your payment of ${amountText}.`);
-    document.moveDown(1);
-    document.font("Helvetica-Bold").text("Payee details");
-    document.font("Helvetica").text(`Name: ${data.name || "N/A"}`);
-    document.text(`Organization: ${data.organization || "N/A"}`);
-    document.text(`Phone: ${data.phone || "N/A"}`);
-    document.moveDown(0.8);
-    document.font("Helvetica-Bold").text("Payment details");
-    document.font("Helvetica").text(`Amount: ${amountText}`);
-    document.text(`Amount in words: ${data.amountInWords || "N/A"}`);
-    document.text(`Payment method: ${data.paymentMethod || "N/A"}`);
-    document.moveDown(1.5);
-    document.font("Helvetica-Bold").text(`Received by: ${data.receivedBy || "N/A"}`);
-    document.moveDown(2);
-    document.fontSize(9).font("Helvetica-Oblique").text("This PDF is an electronic copy of the AAER money receipt.", { align: "center" });
-    document.end();
-  });
+      document.roundedRect(left, top, pageWidth, copyHeight, 6).lineWidth(1).strokeColor("#cbd5e1").stroke();
+
+      const logoPath = path.join(process.cwd(), "public", "logo.png");
+      if (fs.existsSync(logoPath)) {
+        document.image(logoPath, innerLeft, top + 14, { fit: [74, 74], align: "center", valign: "center" });
+      }
+
+      document.fillColor("#0f172a").font("Helvetica-Bold").fontSize(8.5).text(
+        "Alumni Association of Agricultural Extension & Rural Development (AAER)",
+        innerLeft + 84,
+        top + 18,
+        { width: 280, height: 28, align: "center", lineBreak: false, ellipsis: true }
+      );
+      document.fillColor("#475569").font("Helvetica").fontSize(7).text(
+        "Department of Agricultural Extension & Rural Development, GAU, Gazipur",
+        innerLeft + 84,
+        top + 48,
+        { width: 280, height: 12, align: "center", lineBreak: false, ellipsis: true }
+      );
+      document.roundedRect(left + 185, top + 72, 120, 20, 3).fill("#0f172a");
+      document.fillColor("#ffffff").font("Helvetica-Bold").fontSize(8).text("MONEY RECEIPT", left + 185, top + 78, { width: 120, height: 9, align: "center", lineBreak: false });
+      document.roundedRect(left + 313, top + 72, 105, 20, 3).fill("#e0e7ff");
+      document.fillColor("#312e81").fontSize(8).text("PAYEE'S COPY", left + 313, top + 78, { width: 105, height: 9, align: "center", lineBreak: false });
+
+      document.fillColor("#334155").font("Helvetica-Bold").fontSize(7).text(`Voucher No: ${data.id}`, right - 130, top + 13, { width: 116, height: 9, align: "right", lineBreak: false });
+      document.font("Helvetica").text(`Date: ${new Date().toLocaleDateString("en-GB")}`, right - 130, top + 28, { width: 116, height: 9, align: "right", lineBreak: false });
+      document.moveTo(innerLeft, top + 103).lineTo(right - 14, top + 103).strokeColor("#cbd5e1").stroke();
+
+      const field = (label: string, value: unknown, x: number, y: number, width: number) => {
+        document.font("Helvetica-Bold").fontSize(7).fillColor("#64748b").text(label.toUpperCase(), x, y, { width, lineBreak: false });
+        document.font("Helvetica").fontSize(9).fillColor("#0f172a").text(String(value || "N/A"), x, y + 10, { width, height: 12, ellipsis: true, lineBreak: false });
+        document.moveTo(x, y + 25).lineTo(x + width, y + 25).strokeColor("#e2e8f0").stroke();
+      };
+
+      const contentTop = top + 125;
+      field("Received from", data.name, innerLeft, contentTop, columnWidth);
+      field("Membership", data.membershipNature, innerLeft + columnWidth + columnGap, contentTop, columnWidth);
+      field("Organization", data.organization, innerLeft, contentTop + 58, columnWidth);
+      field("Phone", data.phone, innerLeft + columnWidth + columnGap, contentTop + 58, columnWidth);
+      field("Amount", amountText, innerLeft, contentTop + 116, columnWidth);
+      field("Payment method", data.paymentMethod, innerLeft + columnWidth + columnGap, contentTop + 116, columnWidth);
+      field("Amount in words", data.amountInWords, innerLeft, contentTop + 174, innerWidth);
+      field("Number of persons", data.numberOfPersons || 1, innerLeft, contentTop + 232, columnWidth);
+      field("Voucher reference", data.id, innerLeft + columnWidth + columnGap, contentTop + 232, columnWidth);
+
+      const footerTop = top + 575;
+      document.moveTo(innerLeft, footerTop).lineTo(right - 14, footerTop).strokeColor("#cbd5e1").stroke();
+      const qrSize = 82;
+      const qrLeft = left + (pageWidth - qrSize) / 2;
+      document.image(qrBuffer, qrLeft, footerTop + 18, { fit: [qrSize, qrSize] });
+      document.fillColor("#312e81").font("Helvetica-Bold").fontSize(8).text("VERIFY AUTHENTICITY", qrLeft - 25, footerTop + 105, { width: qrSize + 50, height: 10, align: "center", lineBreak: false });
+      document.fillColor("#475569").font("Helvetica-Oblique").fontSize(8).text("Scan to verify receipt", qrLeft - 25, footerTop + 120, { width: qrSize + 50, height: 10, align: "center", lineBreak: false });
+
+      document.moveTo(left + 24, footerTop + 105).lineTo(left + 174, footerTop + 105).strokeColor("#94a3b8").stroke();
+      document.fillColor("#475569").font("Helvetica-Bold").fontSize(8).text("Received by", left + 24, footerTop + 109, { width: 150, height: 10, align: "center", lineBreak: false });
+      document.font("Helvetica").fontSize(10).text(data.receivedBy || "N/A", left + 24, footerTop + 88, { width: 150, height: 12, align: "center", lineBreak: false, ellipsis: true });
+
+      const signaturePath = path.join(process.cwd(), "public", "signature.png");
+      if (fs.existsSync(signaturePath)) {
+        document.image(signaturePath, right - 145, footerTop + 62, { fit: [120, 42], align: "center", valign: "center" });
+      }
+      document.moveTo(right - 145, footerTop + 105).lineTo(right - 20, footerTop + 105).strokeColor("#94a3b8").stroke();
+      document.fillColor("#475569").font("Helvetica-Bold").fontSize(8).text("Treasurer, AAER", right - 145, footerTop + 109, { width: 125, height: 10, align: "center", lineBreak: false });
+
+      document.end();
+  }));
+}
+
+function getVerificationUrl(receiptId: string): string {
+  const configuredUrl = process.env.VITE_APP_URL || process.env.APP_URL || "https://aaercollection.vercel.app";
+  const baseUrl = configuredUrl.startsWith("http") ? configuredUrl : `https://${configuredUrl}`;
+  const verificationUrl = new URL(baseUrl);
+  verificationUrl.search = `verifyId=${encodeURIComponent(receiptId)}`;
+  verificationUrl.hash = "";
+  return verificationUrl.toString();
 }

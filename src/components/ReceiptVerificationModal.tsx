@@ -222,7 +222,7 @@ export const ReceiptVerificationModal: React.FC<ReceiptVerificationModalProps> =
 
       {/* Offscreen element for rendering PNG export of verified receipt */}
       {record && (
-        <div className="fixed -left-[9999px] top-0 opacity-100 pointer-events-none">
+        <div className="no-print fixed -left-[9999px] top-0 opacity-100 pointer-events-none">
           <div ref={pngExportRef} className="w-[800px] bg-white p-6">
             <ReceiptComponent receipt={record} />
           </div>

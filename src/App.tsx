@@ -38,6 +38,7 @@ export default function App() {
 
   // QR Code Verification Modal State
   const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [publicPrintReceipt, setPublicPrintReceipt] = useState<ReceiptRecord | null>(null);
 
   useEffect(() => {
     if (!supabase) {
@@ -177,9 +178,23 @@ export default function App() {
         <div className="min-h-screen bg-slate-100">
           <ReceiptVerificationModal
             receiptId={verificationId}
-            onPrintReceipt={() => undefined}
+            onPrintReceipt={(record) => {
+              setPublicPrintReceipt(record);
+              setTimeout(() => {
+                window.print();
+                setTimeout(() => setPublicPrintReceipt(null), 500);
+              }, 150);
+            }}
             onClose={() => setVerificationId(null)}
           />
+          {publicPrintReceipt && (
+            <div className="print-only-container hidden print:block">
+              <ReceiptComponent
+                receipt={publicPrintReceipt}
+                todayDateFormatted={todayFormatted}
+              />
+            </div>
+          )}
           <div className="min-h-screen flex items-center justify-center text-sm text-slate-500">
             Public receipt verification
           </div>
