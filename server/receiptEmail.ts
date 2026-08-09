@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import PDFDocument from "pdfkit";
+import PDFDocument from "pdfkit/js/pdfkit.standalone"; // Fixes PDFKit bundler/font issues in Vercel
 
 const supabaseAdmin = () => {
   const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
@@ -18,12 +18,16 @@ export async function handleReceiptEmail(req: any, res: any) {
       !(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) && "SUPABASE_URL",
       !process.env.SUPABASE_SERVICE_ROLE_KEY?.trim() && "SUPABASE_SERVICE_ROLE_KEY",
     ].filter(Boolean);
+
     if (missingVariables.length > 0) {
       return res.status(503).json({
         success: false,
-        error: `Receipt email service is not configured. Missing server variable(s): ${missingVariables.join(", ")}. Add them to the deployment environment and redeploy.`,
+        error: `Receipt email service is not configured. Missing variable(s): ${missingVariables.join(", ")}.`,
       });
     }
+
+    // Safely parse request body if it arrives as a string
+    const body = typeof req.body === "string" ? JSON.parse(req.body) : (req.body || {});
 
     const authorization = String(req.headers.authorization || "");
     const accessToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
@@ -41,8 +45,10 @@ export async function handleReceiptEmail(req: any, res: any) {
       .maybeSingle();
     if (approvalError || !approval) return res.status(403).json({ success: false, error: "User is not approved." });
 
+    // Extract fields (supports 'email' or 'payeeEmail')
     const {
       email,
+      payeeEmail,
       id,
       name,
       organization,
@@ -51,8 +57,18 @@ export async function handleReceiptEmail(req: any, res: any) {
       amountInWords,
       paymentMethod,
       receivedBy,
-    } = req.body || {};
-    if (!email || !String(email).includes("@")) return res.status(200).json({ success: true, skipped: true });
+    } = body;
+
+    const targetEmail = email || payeeEmail;
+
+    // Fail explicitly if email is missing rather than skipping silently
+    if (!targetEmail || !String(targetEmail).includes("@")) {
+      console.warn("Receipt email request missing valid recipient email:", body);
+      return res.status(400).json({
+        success: false,
+        error: "A valid payee email address is required to send receipts.",
+      });
+    }
 
     const pdf = await createReceiptPdf({
       id,
@@ -65,7 +81,7 @@ export async function handleReceiptEmail(req: any, res: any) {
       receivedBy,
     });
 
-    const amountText = `$${Number(amount || 0).toLocaleString("en-US", {
+    const amountText = `BDT ${Number(amount || 0).toLocaleString("en-BD", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
@@ -75,7 +91,7 @@ export async function handleReceiptEmail(req: any, res: any) {
       headers: { Authorization: `Bearer ${resendKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         from: fromAddress,
-        to: [email],
+        to: [targetEmail],
         subject: `AAER Money Receipt ${id}`,
         html: `<div style="font-family:Arial,sans-serif;color:#172033;max-width:620px"><h2>AAER Money Receipt</h2><p>Dear ${escapeHtml(name)},</p><p><strong>Thank you for your payment!</strong></p><p>We have successfully received your payment of <strong>${escapeHtml(amountText)}</strong>.</p><table cellpadding="6" cellspacing="0"><tr><td><b>Receipt</b></td><td>${escapeHtml(id)}</td></tr><tr><td><b>Amount in words</b></td><td>${escapeHtml(amountInWords)}</td></tr><tr><td><b>Payment method</b></td><td>${escapeHtml(paymentMethod)}</td></tr><tr><td><b>Received by</b></td><td>${escapeHtml(receivedBy)}</td></tr></table><p>Your receipt is attached as a PDF.</p><p>Thank you.</p></div>`,
         attachments: [{
@@ -88,16 +104,16 @@ export async function handleReceiptEmail(req: any, res: any) {
     if (!response.ok) {
       const details = await response.json().catch(async () => ({ message: await response.text() }));
       const providerMessage = details?.message || details?.error || "Unknown Resend provider error.";
-      console.error("Resend error:", details);
+      console.error("Resend API rejection details:", details);
       return res.status(502).json({
         success: false,
-        error: `Receipt saved, but Resend rejected the email: ${providerMessage}`,
+        error: `Resend rejected the email: ${providerMessage}`,
       });
     }
 
     return res.status(200).json({ success: true });
   } catch (error: any) {
-    console.error("Receipt email error:", error);
+    console.error("Receipt email processing error:", error);
     return res.status(500).json({ success: false, error: error.message || "Receipt email failed." });
   }
 }
@@ -131,7 +147,7 @@ function createReceiptPdf(data: ReceiptPdfData): Promise<Buffer> {
     document.on("end", () => resolve(Buffer.concat(chunks)));
     document.on("error", reject);
 
-    const amountText = `BDT ${Number(data.amount || 0).toLocaleString("en-IN", {
+    const amountText = `BDT ${Number(data.amount || 0).toLocaleString("en-BD", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })}`;
