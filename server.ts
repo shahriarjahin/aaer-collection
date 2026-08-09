@@ -2,14 +2,13 @@ import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
-import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import { handleReceiptEmail } from "./server/receiptEmail";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({
@@ -107,6 +106,8 @@ Extract all written or printed text fields into structured JSON.`;
 
   // Vite middleware in dev, static files in production
   if (process.env.NODE_ENV !== "production") {
+    // Dynamically import vite so it doesn't break production builds or .exe packing
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -115,7 +116,9 @@ Extract all written or printed text fields into structured JSON.`;
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
-    app.get("*", (_req, res) => {
+    
+    // Fixed Express catch-all route using regex matching instead of '*'
+    app.get(/(.*)/, (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
