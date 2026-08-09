@@ -170,9 +170,9 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
                     </td>
                     <td className="py-1.5 px-2 border-r border-slate-200 font-medium text-slate-900">
                       {r.name}
-                      {r.emailAndCell && (
+                      {(r.email || r.phone) && (
                         <span className="block text-[9px] text-slate-400 font-normal">
-                          {r.emailAndCell}
+                          {[r.email, r.phone].filter(Boolean).join(" | ")}
                         </span>
                       )}
                     </td>

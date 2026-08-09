@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ReceiptRecord } from "../types";
-import { getRecords, downloadReceiptAsPng } from "../lib/recordsStore";
+import { verifyReceiptById, downloadReceiptAsPng } from "../lib/recordsStore";
 import { ReceiptComponent } from "./ReceiptComponent";
 import { CheckCircle2, XCircle, ShieldCheck, X, Search, FileText, Image } from "lucide-react";
 
@@ -30,10 +30,7 @@ export const ReceiptVerificationModal: React.FC<ReceiptVerificationModalProps> =
     setRecord(null);
 
     try {
-      const records = await getRecords();
-      const found = records.find(
-        (r) => r.id.toLowerCase() === idToVerify.trim().toLowerCase()
-      );
+      const found = await verifyReceiptById(idToVerify);
 
       if (found) {
         setRecord(found);

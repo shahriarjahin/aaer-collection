@@ -1,8 +1,11 @@
 import express from "express";
 import { GoogleGenAI, Type } from "@google/genai";
+import { handleReceiptEmail } from "../server/receiptEmail";
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
+
+app.post("/api/send-receipt-email", handleReceiptEmail);
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY,

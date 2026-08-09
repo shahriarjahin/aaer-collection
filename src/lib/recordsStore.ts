@@ -1,5 +1,6 @@
 import { ReceiptFormData, ReceiptRecord } from "../types";
-import { requireSupabase } from "./supabase";
+import { requireSupabase, supabase } from "./supabase";
+import { getUserDisplayName } from "./auth";
 import { toPng } from "html-to-image";
 
 const LOCAL_STORAGE_KEY = "aaer_receipt_records_v1";
@@ -33,10 +34,12 @@ function mapDatabaseRecord(record: any): ReceiptRecord {
   return {
     id: record.id,
     timestamp: record.issued_at,
+    receivedBy: record.received_by || "",
     name: record.name,
     organization: record.organization || "",
     membershipNature: record.membership_nature,
-    emailAndCell: record.email_and_cell || "",
+    email: record.email || record.email_and_cell || "",
+    phone: record.phone || "",
     amount: Number(record.amount),
     numberOfPersons: Number(record.number_of_persons || 1),
     amountInWords: record.amount_in_words || "",
@@ -71,14 +74,92 @@ export async function getRecords(): Promise<ReceiptRecord[]> {
   }
 }
 
+export async function verifyReceiptById(id: string): Promise<ReceiptRecord | null> {
+  if (!supabase) throw new Error("Supabase is not configured.");
+
+  const { data, error } = await supabase.rpc("verify_receipt", { receipt_id: id.trim() });
+  if (error) throw error;
+
+  const record = Array.isArray(data) ? data[0] : data;
+  if (!record) return null;
+
+  return {
+    id: record.id,
+    timestamp: record.issued_at,
+    name: record.name || "",
+    organization: record.organization || "",
+    membershipNature: record.membership_nature,
+    email: "",
+    phone: "",
+    amount: Number(record.amount),
+    numberOfPersons: Number(record.number_of_persons || 1),
+    amountInWords: record.amount_in_words || "",
+    paymentMethod: record.payment_method,
+    chequeNumberAndDate: "",
+    bankName: "",
+    remarks: "",
+    receivedBy: record.received_by || "",
+  };
+}
+
+export async function sendReceiptEmail(
+  record: ReceiptRecord
+): Promise<{ status: "sent" | "skipped" | "failed"; error?: string }> {
+  if (!record.email) {
+    return { status: "skipped", error: "No payee email is recorded." };
+  }
+
+  try {
+    const client = requireSupabase();
+    const { data: sessionData } = await client.auth.getSession();
+    const emailResponse = await fetch("/api/send-receipt-email", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${sessionData.session?.access_token || ""}`,
+      },
+      body: JSON.stringify({
+        email: record.email,
+        id: record.id,
+        name: record.name,
+          organization: record.organization,
+          phone: record.phone,
+        amount: record.amount,
+        amountInWords: record.amountInWords,
+        paymentMethod: record.paymentMethod,
+        receivedBy: record.receivedBy,
+      }),
+    });
+    const emailResult = await emailResponse.json().catch(() => ({}));
+    if (emailResponse.ok && emailResult.success && !emailResult.skipped) {
+      return { status: "sent" };
+    }
+    return { status: "failed", error: emailResult.error || "Receipt email delivery failed." };
+  } catch (error) {
+    return {
+      status: "failed",
+      error: error instanceof Error ? error.message : "Receipt email delivery failed.",
+    };
+  }
+}
+
 export async function saveRecord(formData: ReceiptFormData): Promise<ReceiptRecord> {
-  const { data, error } = await requireSupabase()
+  const client = requireSupabase();
+  const { data: userData, error: userError } = await client.auth.getUser();
+  if (userError || !userData.user) {
+    throw new Error("You must be signed in before saving a receipt.");
+  }
+
+  const { data, error } = await client
     .from("receipts")
     .insert({
+      auth_user_id: userData.user.id,
+      received_by: getUserDisplayName(userData.user),
       name: formData.name,
       organization: formData.organization,
       membership_nature: formData.membershipNature,
-      email_and_cell: formData.emailAndCell,
+      email: formData.email,
+      phone: formData.phone,
       amount: Number(formData.amount),
       number_of_persons: Number(formData.numberOfPersons) || 1,
       amount_in_words: formData.amountInWords,
@@ -101,7 +182,14 @@ export async function saveRecord(formData: ReceiptFormData): Promise<ReceiptReco
 
   const newRecord = mapDatabaseRecord(data);
   setCachedRecords([newRecord, ...getCachedRecords()]);
-  return newRecord;
+
+  let emailDeliveryStatus: ReceiptRecord["emailDeliveryStatus"] = "skipped";
+  let emailDeliveryError: string | undefined;
+  const emailResult = await sendReceiptEmail(newRecord);
+  emailDeliveryStatus = emailResult.status;
+  emailDeliveryError = emailResult.error;
+
+  return { ...newRecord, emailDeliveryStatus, emailDeliveryError };
 }
 
 export async function deleteRecord(id: string): Promise<boolean> {

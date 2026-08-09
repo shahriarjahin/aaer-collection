@@ -63,7 +63,7 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
       </header>
 
       {/* 2. BODY GRID */}
-      <div className="py-3 space-y-2.5 text-xs">
+      <div className="receipt-copy-body py-3 space-y-2.5 text-xs">
         <div className="grid grid-cols-2 gap-y-2.5 gap-x-6">
           <div className="border-b border-slate-100 pb-1">
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
@@ -94,10 +94,19 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
 
           <div className="border-b border-slate-100 pb-1">
             <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
-              Contact Info
+              Email
             </p>
             <p className="font-medium text-slate-800 text-[11px] mt-0.5">
-              {receipt.emailAndCell || "N/A"}
+              {receipt.email || "N/A"}
+            </p>
+          </div>
+
+          <div className="border-b border-slate-100 pb-1">
+            <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">
+              Phone
+            </p>
+            <p className="font-medium text-slate-800 text-[11px] mt-0.5">
+              {receipt.phone || "N/A"}
             </p>
           </div>
 
@@ -157,8 +166,11 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
       </div>
 
       {/* 3. FOOTER & SIGNATURES */}
-      <footer className="mt-4 pt-2 flex justify-between items-end gap-2">
+      <footer className="receipt-copy-footer mt-4 pt-2 flex justify-between items-end gap-2">
         <div className="w-32 border-t border-slate-300 text-center pt-1 shrink-0">
+          <p className="text-[10px] font-semibold text-slate-800 truncate" title={receipt.receivedBy || undefined}>
+            {receipt.receivedBy || "N/A"}
+          </p>
           <p className="text-[8px] font-bold text-slate-500 uppercase tracking-wider">
             Received by
           </p>
@@ -263,7 +275,7 @@ export const ReceiptComponent: React.FC<ReceiptComponentProps> = ({
       />
 
       {/* TEAR / CUT PERFORATED LINE */}
-      <div className="my-2 border-t-2 border-dashed border-slate-300 relative flex items-center justify-center print:my-3">
+      <div className="receipt-copy-divider my-2 border-t-2 border-dashed border-slate-300 relative flex items-center justify-center print:my-3">
         <span className="bg-white px-3 text-[9px] font-mono text-slate-400 uppercase tracking-widest flex items-center gap-1 select-none">
           ✂ Tear / Cut Line (Payee Copy Top / Office Copy Bottom)
         </span>

@@ -236,8 +236,72 @@
   }
 
   .receipt-single-copy {
+    box-sizing: border-box !important;
+    height: 114.3mm !important;
+    min-height: 114.3mm !important;
+    max-height: 114.3mm !important;
+    padding: 3mm !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+  }
+
+  .receipt-single-copy header {
+    flex: 0 0 auto !important;
+    padding-bottom: 2mm !important;
+    gap: 2mm !important;
+  }
+
+  .receipt-single-copy header img {
+    width: 16mm !important;
+    height: 16mm !important;
+  }
+
+  .receipt-single-copy .receipt-copy-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+    padding-top: 2mm !important;
+    padding-bottom: 1mm !important;
+    gap: 1mm !important;
+    
+  }
+
+  .receipt-single-copy .receipt-copy-body > .grid {
+    gap: 1.5mm !important;
+  }
+
+  .receipt-single-copy .receipt-copy-footer {
+    flex: 0 0 auto !important;
+    margin-top: 2mm !important;
+    padding-top: 1mm !important;
+  }
+
+  .receipt-single-copy .receipt-copy-footer img {
+    height: 10mm !important;
+  }
+
+  .receipt-copy-divider {
+    box-sizing: border-box !important;
+    height: 10mm !important;
+    min-height: 10mm !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-top-width: 0.3mm !important;
+  }
+
+  .receipt-container {
+    box-sizing: border-box !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: 254mm !important;
+    max-height: 254mm !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 
   .receipt-container header,
@@ -259,7 +323,7 @@
   body {
     background-color: white !important;
     color: black !important;
-    font-size: 11pt !important;
+    font-size: 12pt !important;
     margin: 0 !important;
     padding: 0 !important;
     -webkit-print-color-adjust: exact !important;

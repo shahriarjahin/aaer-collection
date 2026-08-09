@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ReceiptRecord } from "../types";
-import { getRecords, deleteRecord, downloadReceiptAsPng } from "../lib/recordsStore";
+import { getRecords, deleteRecord, downloadReceiptAsPng, sendReceiptEmail } from "../lib/recordsStore";
 import { ReceiptComponent } from "./ReceiptComponent";
-import { Search, Printer, Trash2, Download, RefreshCw, FileText, TrendingUp, Users, Wallet, Calendar, X, Image } from "lucide-react";
+import { Search, Printer, Trash2, Download, RefreshCw, FileText, TrendingUp, Users, Wallet, Calendar, X, Image, Mail } from "lucide-react";
 
 interface RecordsHistoryProps {
   onPrintRecord: (record: ReceiptRecord) => void;
@@ -27,6 +27,8 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
   const [pngTargetReceipt, setPngTargetReceipt] = useState<ReceiptRecord | null>(null);
   const [isExportingPng, setIsExportingPng] = useState<boolean>(false);
   const pngExportRef = useRef<HTMLDivElement>(null);
+  const [sendingEmailId, setSendingEmailId] = useState<string | null>(null);
+  const [emailMessages, setEmailMessages] = useState<Record<string, string>>({});
 
   const fetchRecords = async () => {
     setLoading(true);
@@ -71,6 +73,19 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
     }, 200);
   };
 
+  const handleResendEmail = async (record: ReceiptRecord) => {
+    setSendingEmailId(record.id);
+    setEmailMessages((prev) => ({ ...prev, [record.id]: "Sending..." }));
+    const result = await sendReceiptEmail(record);
+    setEmailMessages((prev) => ({
+      ...prev,
+      [record.id]: result.status === "sent"
+        ? `Sent to ${record.email}`
+        : result.error || "Email was not sent.",
+    }));
+    setSendingEmailId(null);
+  };
+
   // Date quick-set helpers
   const handleSetToday = () => {
     const todayStr = new Date().toISOString().split("T")[0];
@@ -89,7 +104,7 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
       r.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
       r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (r.organization && r.organization.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (r.emailAndCell && r.emailAndCell.toLowerCase().includes(searchTerm.toLowerCase()));
+      ((r.email || r.phone) && `${r.email} ${r.phone}`.toLowerCase().includes(searchTerm.toLowerCase()));
 
     const matchesNature =
       filterNature === "All" || r.membershipNature === filterNature;
@@ -203,7 +218,7 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
       `"${(r.name || "").replace(/"/g, '""')}"`,
       `"${(r.organization || "").replace(/"/g, '""')}"`,
       r.membershipNature,
-      `"${(r.emailAndCell || "").replace(/"/g, '""')}"`,
+      `"${[r.email, r.phone].filter(Boolean).join(" | ").replace(/"/g, '""')}"`,
       r.amount,
       r.numberOfPersons,
       r.paymentMethod,
@@ -528,9 +543,9 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
                           {r.organization}
                         </div>
                       )}
-                      {r.emailAndCell && (
+                      {(r.email || r.phone) && (
                         <div className="text-[10px] text-slate-400 font-normal">
-                          {r.emailAndCell}
+                          {[r.email, r.phone].filter(Boolean).join(" | ")}
                         </div>
                       )}
                     </td>
@@ -564,6 +579,16 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
                     <td className="py-2.5 px-3 text-center space-x-1.5 whitespace-nowrap">
                       <button
                         type="button"
+                        onClick={() => handleResendEmail(r)}
+                        disabled={sendingEmailId === r.id || !r.email}
+                        className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded font-medium text-[11px] inline-flex items-center gap-1 transition shadow-xs cursor-pointer disabled:opacity-50"
+                        title={r.email ? `Resend receipt to ${r.email}` : "No payee email recorded"}
+                      >
+                        <Mail className="w-3 h-3" />
+                        {sendingEmailId === r.id ? "Sending..." : "Resend Email"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => handleDownloadPng(r)}
                         disabled={isExportingPng}
                         className="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium text-[11px] inline-flex items-center gap-1 transition shadow-xs cursor-pointer disabled:opacity-50"
@@ -589,6 +614,11 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
+                      {emailMessages[r.id] && (
+                        <div className={`text-[10px] mt-1 ${emailMessages[r.id].startsWith("Sent") ? "text-emerald-600" : "text-rose-600"}`}>
+                          {emailMessages[r.id]}
+                        </div>
+                      )}
                     </td>
                   </tr>
                 );

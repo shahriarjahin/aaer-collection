@@ -1,8 +1,10 @@
+import "dotenv/config";
 import express from "express";
 import path from "path";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
+import { handleReceiptEmail } from "./server/receiptEmail";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,6 +24,8 @@ const ai = new GoogleGenAI({
 async function startServer() {
   const app = express();
   app.use(express.json({ limit: "10mb" }));
+
+  app.post("/api/send-receipt-email", handleReceiptEmail);
 
   // AI OCR Endpoint for Handwritten Receipts
   app.post("/api/ocr-receipt", async (req, res) => {

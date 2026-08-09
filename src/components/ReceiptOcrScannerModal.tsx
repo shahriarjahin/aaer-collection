@@ -93,7 +93,8 @@ export const ReceiptOcrScannerModal: React.FC<ReceiptOcrScannerModalProps> = ({
           : "Cash",
         chequeNumberAndDate: result.data.paymentRef || "",
         organization: result.data.organization || "",
-        emailAndCell: "",
+        email: "",
+        phone: "",
         amountInWords: "",
         remarks: result.data.remarks || "AI OCR Scanned Record",
       };
@@ -165,7 +166,8 @@ export const ReceiptOcrScannerModal: React.FC<ReceiptOcrScannerModalProps> = ({
         paymentMethod: extractedPayment,
         chequeNumberAndDate: "",
         organization: extractedOrg,
-        emailAndCell: "",
+        email: "",
+        phone: "",
         amountInWords: "",
         remarks: "100% Offline Tesseract OCR Record",
       });

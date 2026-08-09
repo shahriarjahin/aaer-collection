@@ -34,7 +34,8 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
     name: "",
     organization: "",
     membershipNature: "General",
-    emailAndCell: "",
+    email: "",
+    phone: "",
     amount: "",
     numberOfPersons: 1,
     amountInWords: "",
@@ -120,7 +121,8 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
       name: "",
       organization: "",
       membershipNature: "General",
-      emailAndCell: "",
+      email: "",
+      phone: "",
       amount: "",
       numberOfPersons: 1,
       amountInWords: "",
@@ -167,10 +169,15 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
 
     try {
       const savedRecord = await saveRecord(formData);
+      const emailMessage = savedRecord.emailDeliveryStatus === "sent"
+        ? ` Email sent to ${formData.email}.`
+        : savedRecord.emailDeliveryStatus === "skipped"
+        ? " No payee email was provided."
+        : ` Email was not sent: ${savedRecord.emailDeliveryError || "delivery failed"}`;
 
       setStatusMessage({
-        type: "success",
-        text: `Receipt ${savedRecord.id} saved to Supabase! Printing receipt...`,
+        type: savedRecord.emailDeliveryStatus === "failed" ? "error" : "success",
+        text: `Receipt ${savedRecord.id} saved to Supabase.${emailMessage} Printing receipt...`,
       });
 
       // Trigger print and notify parent
@@ -305,8 +312,8 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
           </div>
         </div>
 
-        {/* Row 2: Membership Nature & E-mail/Cell */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Row 2: Membership Nature, Email & Phone */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
               Nature of Membership <span className="text-rose-500">*</span>
@@ -327,16 +334,33 @@ export const DataEntryForm: React.FC<DataEntryFormProps> = ({
 
           <div>
             <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
-              Email & Cell Contact
+              Email
             </label>
             <div className="relative">
               <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               <input
-                type="text"
-                name="emailAndCell"
-                value={formData.emailAndCell}
+                type="email"
+                name="email"
+                value={formData.email}
                 onChange={handleChange}
-                placeholder="e.g. rafiq@gau.edu / 01712-345678"
+                placeholder="e.g. rafiq@gau.edu"
+                className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white transition"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">
+              Phone
+            </label>
+            <div className="relative">
+              <Smartphone className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="tel"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="e.g. 01712-345678"
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm text-slate-900 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:bg-white transition"
               />
             </div>

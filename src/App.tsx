@@ -7,13 +7,20 @@ import { BlankVouchersPrint } from "./components/BlankVouchersPrint";
 import { ReceiptOcrScannerModal } from "./components/ReceiptOcrScannerModal";
 import { DatabaseSyncBar } from "./components/DatabaseSyncBar";
 import { AdminLoginModal } from "./components/AdminLoginModal";
+import { UserLoginScreen } from "./components/UserLoginScreen";
 import { ReceiptVerificationModal } from "./components/ReceiptVerificationModal";
 import { isAdminLoggedIn, setAdminLoggedIn } from "./lib/adminAuth";
+import { getUserDisplayName, isApprovedUser, signOutUser } from "./lib/auth";
+import { supabase } from "./lib/supabase";
 import { downloadReceiptAsPng } from "./lib/recordsStore";
 import { ReceiptFormData, ReceiptRecord } from "./types";
-import { Printer, FilePlus, History, Eye, Sparkles, ShieldCheck, Lock, Unlock, QrCode, FileText, ScanLine, Image } from "lucide-react";
+import { Printer, FilePlus, History, Eye, Sparkles, ShieldCheck, Lock, Unlock, QrCode, FileText, ScanLine, Image, LogOut } from "lucide-react";
+import { User } from "@supabase/supabase-js";
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isApproved, setIsApproved] = useState(false);
   const [activeTab, setActiveTab] = useState<"form" | "preview" | "history" | "blank">("form");
   const [activeReceipt, setActiveReceipt] = useState<ReceiptRecord | null>(null);
   const [draftReceipt, setDraftReceipt] = useState<ReceiptRecord | null>(null);
@@ -33,6 +40,26 @@ export default function App() {
   const [verificationId, setVerificationId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!supabase) {
+      setIsAuthLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    const applySession = async (user: User | null) => {
+      if (isMounted) {
+        setCurrentUser(user);
+        setIsApproved(user ? await isApprovedUser(user.id).catch(() => false) : false);
+        setIsAuthLoading(false);
+      }
+    };
+
+    supabase.auth.getSession().then(({ data }) => applySession(data.session?.user || null));
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      void applySession(session?.user || null);
+    });
+
     setIsAdmin(isAdminLoggedIn());
 
     // Check if URL has ?verifyId=...
@@ -43,6 +70,11 @@ export default function App() {
         setVerificationId(vId);
       }
     }
+
+    return () => {
+      isMounted = false;
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   // Today formatted for signature block
@@ -77,15 +109,13 @@ export default function App() {
 
   // Handle when form submits & receives 200 OK with saved record
   const handleReceiptSavedAndPrint = (savedRecord: ReceiptRecord) => {
-    executeWithAdminAuth(() => {
-      setActiveReportData(null);
-      setActiveReceipt(savedRecord);
-      setHistoryRefreshKey((prev) => prev + 1);
+    setActiveReportData(null);
+    setActiveReceipt(savedRecord);
+    setHistoryRefreshKey((prev) => prev + 1);
 
-      setTimeout(() => {
-        window.print();
-      }, 150);
-    });
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
 
   // Handle live preview drafting
@@ -99,7 +129,8 @@ export default function App() {
           prev.id === targetId &&
           prev.name === formData.name &&
           prev.organization === formData.organization &&
-          prev.emailAndCell === formData.emailAndCell &&
+          prev.email === formData.email &&
+          prev.phone === formData.phone &&
           prev.amount === formData.amount &&
           prev.numberOfPersons === formData.numberOfPersons &&
           prev.paymentMethod === formData.paymentMethod &&
@@ -113,13 +144,62 @@ export default function App() {
         return {
           id: targetId,
           timestamp: prev?.timestamp || new Date().toISOString(),
+          receivedBy: getUserDisplayName(currentUser!),
           ...formData,
         };
       });
     } else {
       setDraftReceipt((prev) => (prev === null ? null : null));
     }
-  }, [activeReceiptId]);
+  }, [activeReceiptId, currentUser]);
+
+  const handleUserLogout = async () => {
+    try {
+      await signOutUser();
+      setAdminLoggedIn(false);
+      setIsAdmin(false);
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
+  if (isAuthLoading) {
+    return <div className="min-h-screen bg-slate-100 flex items-center justify-center text-sm text-slate-500">Checking authentication...</div>;
+  }
+
+  if (!supabase) {
+    return <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 text-center text-sm text-rose-700">Supabase Auth is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.</div>;
+  }
+
+  if (!currentUser) {
+    if (verificationId) {
+      return (
+        <div className="min-h-screen bg-slate-100">
+          <ReceiptVerificationModal
+            receiptId={verificationId}
+            onPrintReceipt={() => undefined}
+            onClose={() => setVerificationId(null)}
+          />
+          <div className="min-h-screen flex items-center justify-center text-sm text-slate-500">
+            Public receipt verification
+          </div>
+        </div>
+      );
+    }
+    return <UserLoginScreen />;
+  }
+
+  if (!isApproved) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-white border border-amber-200 rounded-xl shadow-sm p-6 text-center">
+          <h1 className="text-lg font-bold text-slate-900">Approval pending</h1>
+          <p className="text-sm text-slate-600 mt-2">Your account is signed in, but an administrator must approve it before you can issue receipts.</p>
+          <button type="button" onClick={handleUserLogout} className="mt-5 px-4 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold">Sign out</button>
+        </div>
+      </div>
+    );
+  }
 
   // Handle re-printing a single record from History
   const handlePrintHistoryRecord = (record: ReceiptRecord) => {
@@ -270,6 +350,16 @@ export default function App() {
                 Admin Login
               </button>
             )}
+
+            <button
+              type="button"
+              onClick={handleUserLogout}
+              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
+              title={`Sign out ${getUserDisplayName(currentUser)}`}
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Sign out
+            </button>
           </div>
         </div>
       </header>

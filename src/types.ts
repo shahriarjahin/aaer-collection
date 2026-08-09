@@ -11,7 +11,8 @@ export interface ReceiptFormData {
   name: string;
   organization: string;
   membershipNature: MembershipNature;
-  emailAndCell: string;
+  email: string;
+  phone: string;
   amount: string | number;
   numberOfPersons: string | number;
   amountInWords: string;
@@ -24,4 +25,7 @@ export interface ReceiptFormData {
 export interface ReceiptRecord extends ReceiptFormData {
   id: string;
   timestamp: string;
+  receivedBy?: string;
+  emailDeliveryStatus?: "sent" | "skipped" | "failed";
+  emailDeliveryError?: string;
 }
