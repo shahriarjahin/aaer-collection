@@ -1,6 +1,6 @@
 import express from "express";
 import { GoogleGenAI, Type } from "@google/genai";
-import { handleReceiptEmail } from "../server/receiptEmail";
+import { handleReceiptEmail } from "../server/receiptEmail.js";
 
 const app = express();
 app.use(express.json({ limit: "10mb" }));
