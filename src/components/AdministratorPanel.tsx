@@ -11,6 +11,7 @@ export const AdministratorPanel: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<string | null>(null);
+  const [savingUserId, setSavingUserId] = useState<string | null>(null);
 
   const loadData = async () => {
     setLoading(true);
@@ -29,11 +30,16 @@ export const AdministratorPanel: React.FC = () => {
   useEffect(() => { void loadData(); }, []);
 
   const saveUser = async (user: UserApproval) => {
+    setError(null);
+    setSavingUserId(user.userId);
     try {
       await updateUserApproval(user.userId, user.approved, user.fullName, user.isAdmin);
+      setUsers((current) => current.map((item) => item.userId === user.userId ? user : item));
       setEditingUser(null);
     } catch (saveError: any) {
       setError(saveError.message || "Could not update account.");
+    } finally {
+      setSavingUserId(null);
     }
   };
 
@@ -69,7 +75,7 @@ export const AdministratorPanel: React.FC = () => {
               <td className="p-3">{editingUser === user.userId ? <input value={user.fullName} onChange={(event) => setUsers((current) => current.map((item) => item.userId === user.userId ? { ...item, fullName: event.target.value } : item))} className="border rounded px-2 py-1" /> : user.fullName}</td>
               <td className="p-3">{editingUser === user.userId || !user.approved ? <select value={user.isAdmin ? "admin" : "user"} onChange={(event) => setUsers((current) => current.map((item) => item.userId === user.userId ? { ...item, isAdmin: event.target.value === "admin" } : item))} className="border rounded px-2 py-1"><option value="user">User</option><option value="admin">Administrator</option></select> : user.isAdmin ? "Administrator" : "User"}</td>
               <td className="p-3"><span className={user.approved ? "text-emerald-700" : "text-amber-700"}>{user.approved ? "Approved" : "Pending"}</span></td>
-              <td className="p-3 flex gap-2">{editingUser === user.userId ? <button type="button" onClick={() => void saveUser(user)} className="text-emerald-700 font-semibold flex items-center gap-1"><Save className="w-3.5 h-3.5" /> Save</button> : <button type="button" onClick={() => setEditingUser(user.userId)} className="text-indigo-700 font-semibold flex items-center gap-1"><Pencil className="w-3.5 h-3.5" /> Edit</button>}{!user.approved && <button type="button" onClick={() => void saveUser({ ...user, approved: true })} className="text-emerald-700 font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Approve</button>}</td>
+              <td className="p-3 flex gap-2">{editingUser === user.userId ? <button type="button" disabled={savingUserId === user.userId} onClick={() => void saveUser(user)} className="text-emerald-700 font-semibold flex items-center gap-1 disabled:opacity-50"><Save className="w-3.5 h-3.5" /> {savingUserId === user.userId ? "Saving..." : "Save"}</button> : <button type="button" onClick={() => setEditingUser(user.userId)} className="text-indigo-700 font-semibold flex items-center gap-1"><Pencil className="w-3.5 h-3.5" /> Edit</button>}{!user.approved && <button type="button" disabled={savingUserId === user.userId} onClick={() => void saveUser({ ...user, approved: true })} className="text-emerald-700 font-semibold flex items-center gap-1 disabled:opacity-50"><Check className="w-3.5 h-3.5" /> {savingUserId === user.userId ? "Approving..." : "Approve"}</button>}</td>
             </tr>)}
           </tbody></table>
         </div>
