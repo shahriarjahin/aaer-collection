@@ -34,6 +34,8 @@
   "devDependencies": {
     "@types/express": "^5.0.6",
     "@types/node": "^26.2.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
     "autoprefixer": "^10.5.4",
     "esbuild": "^0.28.2",
     "tailwindcss": "^4.3.3",
@@ -46,5 +48,4 @@
       "node_modules/pdfkit/js/data/*.afm"
     ]
   }
-
 }
