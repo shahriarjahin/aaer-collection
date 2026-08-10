@@ -224,124 +224,84 @@ export default function App() {
       <DatabaseSyncBar onRefresh={() => setHistoryRefreshKey((prev) => prev + 1)} />
 
       {/* Top Application Navigation Bar (no-print) */}
-      <header className="no-print bg-white text-slate-900 border-b border-slate-200 shadow-xs">
-        <div className="max-w-7xl mx-auto px-6 py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <img
-              src="/logo.png"
-              alt="AAER Logo"
-              className="w-30 h-30 object-contain select-none"
-            />
-            <div>
-              <h1 className="text-sm md:text-base font-bold tracking-tight text-slate-900 leading-snug">
-                AAER Collection Portal
-              </h1>
-              <p className="text-[11px] text-slate-500 font-medium">
-                Alumni Association of Agricultural Extension & Rural Development — GAU ESTD. 2017
-              </p>
+      <header className="no-print app-header">
+        <div className="app-header-inner">
+          <div className="app-brand-lockup">
+            <div className="app-brand-mark">
+              <img src="/logo.png" alt="AAER Logo" className="select-none" />
+            </div>
+            <div className="min-w-0">
+              <div className="app-brand-eyebrow">AAER / GAU</div>
+              <h1 className="app-brand-title">Collection Portal</h1>
+              <p className="app-brand-subtitle">Receipts, records & verification</p>
             </div>
           </div>
 
-          {/* Navigation Tabs & Security Controls */}
-          <div className="flex flex-wrap items-center gap-3">
-            <nav className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
+          <div className="app-header-actions">
+            <nav className="app-primary-nav" aria-label="Primary navigation">
               <button
                 type="button"
                 onClick={() => setActiveTab("form")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition ${
+                className={`app-nav-item ${
                   activeTab === "form"
-                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                    ? "is-active"
+                    : ""
                 }`}
               >
-                <FilePlus className="w-3.5 h-3.5 text-indigo-600" />
+                <FilePlus />
                 Collection Entry
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("preview")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition ${
+                className={`app-nav-item ${
                   activeTab === "preview"
-                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                    ? "is-active"
+                    : ""
                 }`}
               >
-                <Eye className="w-3.5 h-3.5 text-indigo-600" />
+                <Eye />
                 Receipt Preview
               </button>
 
               <button
                 type="button"
                 onClick={() => setActiveTab("history")}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition ${
+                className={`app-nav-item ${
                   activeTab === "history"
-                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                    ? "is-active"
+                    : ""
                 }`}
               >
-                <History className="w-3.5 h-3.5 text-indigo-600" />
+                <History />
                 Report Dashboard
               </button>
 
               <button
                 type="button"
                 onClick={() => executeWithAdministrator(() => setActiveTab("blank"))}
-                className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition ${
+                className={`app-nav-item ${
                   activeTab === "blank"
-                    ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
-                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-200/60"
+                    ? "is-active"
+                    : ""
                 }`}
               >
-                <FileText className="w-3.5 h-3.5 text-indigo-600" />
+                <FileText />
                 Blank Vouchers
               </button>
             </nav>
 
-            {/* Quick Scan AI Button */}
-            <button
-              type="button"
-              onClick={() => setIsOcrModalOpen(true)}
-              className="px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-              title="Scan Handwritten Receipt Photo with Gemini AI OCR"
-            >
-              <ScanLine className="w-3.5 h-3.5 text-indigo-600" />
-              AI OCR Scan
-            </button>
-
-            {/* Quick Verify Receipt QR Button */}
-            <button
-              type="button"
-              onClick={() => setVerificationId("REC-2026-0001")}
-              className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-semibold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-              title="Scan or Verify Receipt Authenticity"
-            >
-              <QrCode className="w-3.5 h-3.5 text-indigo-600" />
-              Verify QR
-            </button>
-
-            {/* Administrator workspace */}
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => setActiveTab("administrator")}
-                className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                title="Open administrator workspace"
-              >
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                Administrator
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={handleUserLogout}
-              className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-              title={`Sign out ${getUserDisplayName(currentUser)}`}
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Sign out
-            </button>
+            <div className="app-header-tools">
+              <button type="button" onClick={() => setIsOcrModalOpen(true)} className="app-tool-button app-tool-button-primary" title="Scan handwritten receipt with AI"><ScanLine /> <span>AI OCR</span></button>
+              <button type="button" onClick={() => setVerificationId("REC-2026-0001")} className="app-tool-button" title="Verify receipt authenticity"><QrCode /> <span>Verify</span></button>
+              {isAdmin && <button type="button" onClick={() => setActiveTab("administrator")} className="app-tool-button app-admin-button" title="Open administrator workspace"><ShieldCheck /> <span>Admin</span></button>}
+              <div className="app-account-menu">
+                <div className="app-account-avatar">{getUserDisplayName(currentUser).charAt(0).toUpperCase()}</div>
+                <div className="app-account-copy"><strong>{getUserDisplayName(currentUser)}</strong><span>{isAdmin ? "Administrator" : "Approved user"}</span></div>
+                <button type="button" onClick={handleUserLogout} className="app-signout-button" title={`Sign out ${getUserDisplayName(currentUser)}`}><LogOut /></button>
+              </div>
+            </div>
           </div>
         </div>
       </header>

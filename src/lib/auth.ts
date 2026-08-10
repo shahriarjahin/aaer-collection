@@ -67,10 +67,10 @@ export async function getAdministratorUsers(): Promise<UserApproval[]> {
   }));
 }
 
-export async function updateUserApproval(userId: string, approved: boolean, fullName: string): Promise<void> {
+export async function updateUserApproval(userId: string, approved: boolean, fullName: string, isAdmin: boolean): Promise<void> {
   const { error } = await requireSupabase()
     .from("approved_users")
-    .update({ approved, full_name: fullName.trim() })
+    .update({ approved, full_name: fullName.trim(), is_admin: isAdmin })
     .eq("user_id", userId);
   if (error) throw error;
 }

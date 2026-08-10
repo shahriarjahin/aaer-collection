@@ -51,7 +51,7 @@ create policy "Users can create their pending account"
   with check (user_id = auth.uid() and approved = false and is_admin = false);
 
 revoke update on table public.approved_users from authenticated;
-grant update (approved, full_name) on table public.approved_users to authenticated;
+grant update (approved, full_name, is_admin) on table public.approved_users to authenticated;
 
 create policy "Administrators can update accounts"
   on public.approved_users

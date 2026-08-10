@@ -30,7 +30,7 @@ export const AdministratorPanel: React.FC = () => {
 
   const saveUser = async (user: UserApproval) => {
     try {
-      await updateUserApproval(user.userId, user.approved, user.fullName);
+      await updateUserApproval(user.userId, user.approved, user.fullName, user.isAdmin);
       setEditingUser(null);
     } catch (saveError: any) {
       setError(saveError.message || "Could not update account.");
@@ -63,10 +63,11 @@ export const AdministratorPanel: React.FC = () => {
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="p-4 border-b border-slate-200 flex items-center gap-2"><Users className="w-4 h-4 text-indigo-600" /><h3 className="text-sm font-bold">Accounts awaiting approval</h3></div>
         <div className="overflow-x-auto">
-          <table className="w-full text-xs"><thead className="bg-slate-50 text-left"><tr><th className="p-3">Email</th><th className="p-3">Full name</th><th className="p-3">Status</th><th className="p-3">Action</th></tr></thead><tbody>
+          <table className="w-full text-xs"><thead className="bg-slate-50 text-left"><tr><th className="p-3">Email</th><th className="p-3">Full name</th><th className="p-3">Role</th><th className="p-3">Status</th><th className="p-3">Action</th></tr></thead><tbody>
             {users.map((user) => <tr key={user.userId} className="border-t border-slate-100">
               <td className="p-3">{user.email}</td>
               <td className="p-3">{editingUser === user.userId ? <input value={user.fullName} onChange={(event) => setUsers((current) => current.map((item) => item.userId === user.userId ? { ...item, fullName: event.target.value } : item))} className="border rounded px-2 py-1" /> : user.fullName}</td>
+              <td className="p-3">{editingUser === user.userId || !user.approved ? <select value={user.isAdmin ? "admin" : "user"} onChange={(event) => setUsers((current) => current.map((item) => item.userId === user.userId ? { ...item, isAdmin: event.target.value === "admin" } : item))} className="border rounded px-2 py-1"><option value="user">User</option><option value="admin">Administrator</option></select> : user.isAdmin ? "Administrator" : "User"}</td>
               <td className="p-3"><span className={user.approved ? "text-emerald-700" : "text-amber-700"}>{user.approved ? "Approved" : "Pending"}</span></td>
               <td className="p-3 flex gap-2">{editingUser === user.userId ? <button type="button" onClick={() => void saveUser(user)} className="text-emerald-700 font-semibold flex items-center gap-1"><Save className="w-3.5 h-3.5" /> Save</button> : <button type="button" onClick={() => setEditingUser(user.userId)} className="text-indigo-700 font-semibold flex items-center gap-1"><Pencil className="w-3.5 h-3.5" /> Edit</button>}{!user.approved && <button type="button" onClick={() => void saveUser({ ...user, approved: true })} className="text-emerald-700 font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" /> Approve</button>}</td>
             </tr>)}
