@@ -327,6 +327,157 @@
   }
 }
 
+@media (max-width: 640px) {
+  body {
+    min-width: 320px;
+  }
+
+  .app-header-tools {
+    justify-content: space-between;
+    gap: 5px;
+  }
+
+  .app-account-menu {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .app-account-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .data-entry-container,
+  .records-history-section {
+    width: calc(100% - 8px);
+    padding: 16px !important;
+    border-radius: 14px;
+  }
+
+  .data-entry-container > form,
+  .records-history-section {
+    min-width: 0;
+  }
+
+  .data-entry-container > div:first-child {
+    align-items: stretch;
+  }
+
+  .data-entry-container > div:first-child > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .data-entry-container > div:first-child > div:last-child button {
+    justify-content: center;
+    min-height: 42px;
+    padding: 8px 7px;
+    text-align: center;
+  }
+
+  .data-entry-container > div:first-child > div:last-child button:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .data-entry-container input,
+  .data-entry-container select,
+  .data-entry-container textarea {
+    min-height: 44px;
+    font-size: 16px;
+  }
+
+  .data-entry-container textarea {
+    min-height: 88px;
+  }
+
+  .data-entry-container form > button,
+  .data-entry-container form button[type="submit"] {
+    min-height: 46px;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .data-entry-container [class*="grid-cols-2"],
+  .data-entry-container [class*="grid-cols-3"] {
+    gap: 12px;
+  }
+
+  .data-entry-container .flex.items-center.gap-2 {
+    flex-wrap: wrap;
+  }
+
+  .data-entry-container .flex.items-center.gap-2 > label {
+    min-height: 42px;
+    padding: 9px 10px;
+  }
+
+  .records-history-section > div:first-child {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .records-history-section > div:first-child > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+
+  .records-history-section > div:first-child > div:last-child button {
+    min-height: 42px;
+    justify-content: center;
+  }
+
+  .records-history-section > div:first-child > div:last-child button:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .records-history-section .overflow-x-auto {
+    margin-right: -16px;
+    margin-left: -16px;
+    padding: 0 16px 4px;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .records-history-section table {
+    min-width: 720px;
+  }
+
+  .records-history-section input,
+  .records-history-section select,
+  .records-history-section button {
+    min-height: 42px;
+  }
+
+  .records-history-section .grid {
+    gap: 10px;
+  }
+
+  .receipt-single-copy,
+  .printable-report-container {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  .no-print.bg-slate-900 {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .no-print.bg-slate-900 button {
+    min-height: 40px;
+    margin-left: 0;
+  }
+
+  .fixed.inset-0 > div {
+    max-height: calc(100vh - 24px);
+    overflow-y: auto;
+    border-radius: 16px;
+  }
+}
+
 .a4-blank-voucher-landscape {
   box-sizing: border-box;
   width: 297mm;
