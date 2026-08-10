@@ -214,24 +214,20 @@ export default function App() {
 
   // Handle re-printing a single record from History
   const handlePrintHistoryRecord = (record: ReceiptRecord) => {
-    executeWithAdministrator(() => {
-      setActiveReportData(null);
-      setActiveReceipt(record);
-      setTimeout(() => {
-        printReceiptWhenReady();
-      }, 150);
-    });
+    setActiveReportData(null);
+    setActiveReceipt(record);
+    setTimeout(() => {
+      printReceiptWhenReady();
+    }, 150);
   };
 
   // Handle printing the summary list/report from History
   const handlePrintReportList = (records: ReceiptRecord[], filterLabel: string) => {
-    executeWithAdministrator(() => {
-      setActiveReceipt(null);
-      setActiveReportData({ records, filterLabel });
-      setTimeout(() => {
-        printReceiptWhenReady();
-      }, 150);
-    });
+    setActiveReceipt(null);
+    setActiveReportData({ records, filterLabel });
+    setTimeout(() => {
+      printReceiptWhenReady();
+    }, 150);
   };
 
   return (
