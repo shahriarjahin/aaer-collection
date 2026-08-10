@@ -49,7 +49,7 @@ export const UserLoginScreen: React.FC = () => {
           <div>
             <h2 className="text-base font-bold text-slate-900">{isSignUp ? "Request an account" : "Approved user sign in"}</h2>
             <p className="text-xs text-slate-500 mt-1">
-              {isSignUp ? "An administrator must approve your account before you can sign in." : "Your account name will be printed automatically in the Received by field."}
+              {isSignUp ? "An administrator must approve your account before you can sign in." : ""}
             </p>
           </div>
 
