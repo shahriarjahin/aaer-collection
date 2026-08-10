@@ -246,6 +246,16 @@
   outline-offset: 2px;
 }
 
+.receipt-single-copy .receipt-logo {
+  display: block;
+  flex: 0 0 auto;
+  width: 80px;
+  height: 80px;
+  min-width: 80px;
+  min-height: 80px;
+  object-fit: contain;
+}
+
 @media (min-width: 1024px) {
   .app-header-inner {
     display: flex;
@@ -729,6 +739,9 @@
   .receipt-single-copy header img {
     width: 30mm !important;
     height: 30mm !important;
+    min-width: 30mm !important;
+    min-height: 30mm !important;
+    flex: 0 0 30mm !important;
   }
 
   .receipt-single-copy .receipt-copy-body {

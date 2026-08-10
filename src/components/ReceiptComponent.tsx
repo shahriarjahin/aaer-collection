@@ -28,10 +28,13 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
       <header className="flex flex-row items-start justify-between pb-3 border-b border-slate-200 gap-3">
         {/* Left: Organization Logo */}
         <div className="flex items-center gap-3">
-          <img 
-            src="/logo.png" 
-            alt="AAER Logo" 
-            className="w-30 h-30 object-contain select-none" 
+          <img
+            src="/logo.png"
+            alt="AAER Logo"
+            width={80}
+            height={80}
+            decoding="async"
+            className="receipt-logo w-20 h-20 object-contain select-none"
           />
         </div>
 

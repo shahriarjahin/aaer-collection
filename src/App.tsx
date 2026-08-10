@@ -89,6 +89,22 @@ export default function App() {
     setActiveTab("form");
   };
 
+  const printReceiptWhenReady = () => {
+    window.setTimeout(async () => {
+      const printableImages = Array.from(document.querySelectorAll<HTMLImageElement>(
+        ".print-only-container img"
+      ));
+      await Promise.all(printableImages.map((image) => {
+        if (image.complete) return Promise.resolve();
+        return new Promise<void>((resolve) => {
+          image.addEventListener("load", () => resolve(), { once: true });
+          image.addEventListener("error", () => resolve(), { once: true });
+        });
+      }));
+      window.print();
+    }, 150);
+  };
+
   // Handle when form submits & receives 200 OK with saved record
   const handleReceiptSavedAndPrint = (savedRecord: ReceiptRecord) => {
     setActiveReportData(null);
@@ -96,7 +112,7 @@ export default function App() {
     setHistoryRefreshKey((prev) => prev + 1);
 
     setTimeout(() => {
-      window.print();
+      printReceiptWhenReady();
     }, 150);
   };
 
@@ -161,7 +177,7 @@ export default function App() {
             onPrintReceipt={(record) => {
               setPublicPrintReceipt(record);
               setTimeout(() => {
-                window.print();
+                printReceiptWhenReady();
                 setTimeout(() => setPublicPrintReceipt(null), 500);
               }, 150);
             }}
@@ -202,7 +218,7 @@ export default function App() {
       setActiveReportData(null);
       setActiveReceipt(record);
       setTimeout(() => {
-        window.print();
+        printReceiptWhenReady();
       }, 150);
     });
   };
@@ -213,7 +229,7 @@ export default function App() {
       setActiveReceipt(null);
       setActiveReportData({ records, filterLabel });
       setTimeout(() => {
-        window.print();
+        printReceiptWhenReady();
       }, 150);
     });
   };
@@ -372,7 +388,7 @@ export default function App() {
 
                 <button
                   type="button"
-                  onClick={() => window.print()}
+                  onClick={printReceiptWhenReady}
                   disabled={!activeReceipt && !draftReceipt}
                   className="px-3.5 py-2 bg-slate-900 hover:bg-black text-white font-bold rounded-lg text-xs flex items-center gap-1.5 transition disabled:opacity-40 cursor-pointer shadow-xs"
                 >
@@ -459,7 +475,7 @@ export default function App() {
         onPrintReceipt={(record) => {
           setActiveReportData(null);
           setActiveReceipt(record);
-          setTimeout(() => window.print(), 150);
+          printReceiptWhenReady();
         }}
         onClose={() => setVerificationId(null)}
       />
