@@ -1,14 +1,14 @@
 import "dotenv/config";
 import express from "express";
 import path from "path";
-import { fileURLToPath } from "url";
+// REMOVED: import { fileURLToPath } from "url";
 import { GoogleGenAI, Type } from "@google/genai";
 import { handleReceiptEmail } from "./server/receiptEmail";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// REMOVED: const __filename = fileURLToPath(import.meta.url);
+// REMOVED: const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // Initialize Gemini Client
 const ai = new GoogleGenAI({
@@ -53,7 +53,7 @@ async function startServer() {
 Extract all written or printed text fields into structured JSON.`;
 
       const response = await ai.models.generateContent({
-        model: "gemini-3.6-flash",
+        model: "gemini-1.5-flash", // FIXED: "gemini-3.6-flash" does not exist
         contents: {
           parts: [imagePart, { text: promptText }],
         },
