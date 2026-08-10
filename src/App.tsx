@@ -290,18 +290,20 @@ export default function App() {
                 Report Dashboard
               </button>
 
-              <button
-                type="button"
-                onClick={() => executeWithAdministrator(() => setActiveTab("blank"))}
-                className={`app-nav-item ${
-                  activeTab === "blank"
-                    ? "is-active"
-                    : ""
-                }`}
-              >
-                <FileText />
-                Blank Vouchers
-              </button>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => executeWithAdministrator(() => setActiveTab("blank"))}
+                  className={`app-nav-item ${
+                    activeTab === "blank"
+                      ? "is-active"
+                      : ""
+                  }`}
+                >
+                  <FileText />
+                  Blank Vouchers
+                </button>
+              )}
             </nav>
 
             <div className="app-header-tools">
@@ -329,7 +331,7 @@ export default function App() {
               onReceiptSavedAndPrint={handleReceiptSavedAndPrint}
               onPreviewChange={handlePreviewChange}
               onOpenOcrScanner={() => setIsOcrModalOpen(true)}
-              onOpenBlankPrint={() => executeWithAdministrator(() => setActiveTab("blank"))}
+              onOpenBlankPrint={isAdmin ? () => setActiveTab("blank") : undefined}
               initialFormData={scannedFormData}
             />
 
