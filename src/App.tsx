@@ -6,22 +6,22 @@ import { PrintableReport } from "./components/PrintableReport";
 import { BlankVouchersPrint } from "./components/BlankVouchersPrint";
 import { ReceiptOcrScannerModal } from "./components/ReceiptOcrScannerModal";
 import { DatabaseSyncBar } from "./components/DatabaseSyncBar";
-import { AdminLoginModal } from "./components/AdminLoginModal";
+import { AdministratorPanel } from "./components/AdministratorPanel";
 import { UserLoginScreen } from "./components/UserLoginScreen";
 import { ReceiptVerificationModal } from "./components/ReceiptVerificationModal";
-import { isAdminLoggedIn, setAdminLoggedIn } from "./lib/adminAuth";
-import { getUserDisplayName, isApprovedUser, signOutUser } from "./lib/auth";
+import { getCurrentUserApproval, getUserDisplayName, signOutUser } from "./lib/auth";
 import { supabase } from "./lib/supabase";
 import { downloadReceiptAsPng } from "./lib/recordsStore";
 import { ReceiptFormData, ReceiptRecord } from "./types";
-import { Printer, FilePlus, History, Eye, Sparkles, ShieldCheck, Lock, Unlock, QrCode, FileText, ScanLine, Image, LogOut } from "lucide-react";
+import { Printer, FilePlus, History, Eye, Sparkles, ShieldCheck, Lock, QrCode, FileText, ScanLine, Image, LogOut } from "lucide-react";
 import { User } from "@supabase/supabase-js";
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isApproved, setIsApproved] = useState(false);
-  const [activeTab, setActiveTab] = useState<"form" | "preview" | "history" | "blank">("form");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [activeTab, setActiveTab] = useState<"form" | "preview" | "history" | "blank" | "administrator">("form");
   const [activeReceipt, setActiveReceipt] = useState<ReceiptRecord | null>(null);
   const [draftReceipt, setDraftReceipt] = useState<ReceiptRecord | null>(null);
   const [activeReportData, setActiveReportData] = useState<{ records: ReceiptRecord[]; filterLabel: string } | null>(null);
@@ -30,11 +30,6 @@ export default function App() {
   // AI OCR Scanner State
   const [isOcrModalOpen, setIsOcrModalOpen] = useState<boolean>(false);
   const [scannedFormData, setScannedFormData] = useState<ReceiptFormData | null>(null);
-
-  // Admin Security State
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isAdminModalOpen, setIsAdminModalOpen] = useState<boolean>(false);
-  const [pendingAdminAction, setPendingAdminAction] = useState<(() => void) | null>(null);
 
   // QR Code Verification Modal State
   const [verificationId, setVerificationId] = useState<string | null>(null);
@@ -50,7 +45,9 @@ export default function App() {
     const applySession = async (user: User | null) => {
       if (isMounted) {
         setCurrentUser(user);
-        setIsApproved(user ? await isApprovedUser(user.id).catch(() => false) : false);
+        const approval = user ? await getCurrentUserApproval(user.id).catch(() => null) : null;
+        setIsApproved(Boolean(approval?.approved));
+        setIsAdmin(Boolean(approval?.isAdmin && approval.approved));
         setIsAuthLoading(false);
       }
     };
@@ -60,8 +57,6 @@ export default function App() {
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       void applySession(session?.user || null);
     });
-
-    setIsAdmin(isAdminLoggedIn());
 
     // Check if URL has ?verifyId=...
     if (typeof window !== "undefined") {
@@ -85,27 +80,13 @@ export default function App() {
     year: "numeric",
   });
 
-  // Admin action execution helper
-  const executeWithAdminAuth = (action: () => void) => {
-    if (isAdminLoggedIn()) {
-      action();
-    } else {
-      setPendingAdminAction(() => action);
-      setIsAdminModalOpen(true);
-    }
-  };
-
-  const handleAdminAuthSuccess = () => {
-    setIsAdmin(true);
-    if (pendingAdminAction) {
-      pendingAdminAction();
-      setPendingAdminAction(null);
-    }
+  // Administrator-only action helper. Authorization is enforced by Supabase RLS.
+  const executeWithAdministrator = (action: () => void) => {
+    if (isAdmin) action();
   };
 
   const handleAdminLogout = () => {
-    setAdminLoggedIn(false);
-    setIsAdmin(false);
+    setActiveTab("form");
   };
 
   // Handle when form submits & receives 200 OK with saved record
@@ -157,7 +138,6 @@ export default function App() {
   const handleUserLogout = async () => {
     try {
       await signOutUser();
-      setAdminLoggedIn(false);
       setIsAdmin(false);
     } catch (error) {
       console.error("Logout error:", error);
@@ -218,7 +198,7 @@ export default function App() {
 
   // Handle re-printing a single record from History
   const handlePrintHistoryRecord = (record: ReceiptRecord) => {
-    executeWithAdminAuth(() => {
+    executeWithAdministrator(() => {
       setActiveReportData(null);
       setActiveReceipt(record);
       setTimeout(() => {
@@ -229,7 +209,7 @@ export default function App() {
 
   // Handle printing the summary list/report from History
   const handlePrintReportList = (records: ReceiptRecord[], filterLabel: string) => {
-    executeWithAdminAuth(() => {
+    executeWithAdministrator(() => {
       setActiveReceipt(null);
       setActiveReportData({ records, filterLabel });
       setTimeout(() => {
@@ -250,7 +230,7 @@ export default function App() {
             <img
               src="/logo.png"
               alt="AAER Logo"
-              className="w-20 h-20 object-contain select-none"
+              className="w-30 h-30 object-contain select-none"
             />
             <div>
               <h1 className="text-sm md:text-base font-bold tracking-tight text-slate-900 leading-snug">
@@ -306,7 +286,7 @@ export default function App() {
 
               <button
                 type="button"
-                onClick={() => executeWithAdminAuth(() => setActiveTab("blank"))}
+                onClick={() => executeWithAdministrator(() => setActiveTab("blank"))}
                 className={`px-3.5 py-1.5 rounded-md text-xs font-semibold flex items-center gap-2 transition ${
                   activeTab === "blank"
                     ? "bg-white text-slate-900 shadow-xs border border-slate-200/80"
@@ -340,29 +320,16 @@ export default function App() {
               Verify QR
             </button>
 
-            {/* Admin Security Badge / Button */}
-            {isAdmin ? (
+            {/* Administrator workspace */}
+            {isAdmin && (
               <button
                 type="button"
-                onClick={handleAdminLogout}
+                onClick={() => setActiveTab("administrator")}
                 className="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 text-emerald-800 text-xs font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                title="Admin Authorized. Click to Lock / Logout Admin mode."
+                title="Open administrator workspace"
               >
-                <Unlock className="w-3.5 h-3.5 text-emerald-600" />
-                Admin Mode
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => {
-                  setPendingAdminAction(null);
-                  setIsAdminModalOpen(true);
-                }}
-                className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 text-xs font-bold rounded-lg flex items-center gap-1.5 transition cursor-pointer"
-                title="Click to authenticate as Admin"
-              >
-                <Lock className="w-3.5 h-3.5 text-amber-600" />
-                Admin Login
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                Administrator
               </button>
             )}
 
@@ -390,7 +357,7 @@ export default function App() {
               onReceiptSavedAndPrint={handleReceiptSavedAndPrint}
               onPreviewChange={handlePreviewChange}
               onOpenOcrScanner={() => setIsOcrModalOpen(true)}
-              onOpenBlankPrint={() => executeWithAdminAuth(() => setActiveTab("blank"))}
+              onOpenBlankPrint={() => executeWithAdministrator(() => setActiveTab("blank"))}
               initialFormData={scannedFormData}
             />
 
@@ -471,9 +438,12 @@ export default function App() {
               onPrintRecord={handlePrintHistoryRecord}
               onPrintReport={handlePrintReportList}
               refreshTrigger={historyRefreshKey}
+              canAdminister={isAdmin}
             />
           </div>
         )}
+
+        {activeTab === "administrator" && isAdmin && <AdministratorPanel />}
 
         {/* VIEW 4: BULK BLANK VOUCHERS PRINTING */}
         {activeTab === "blank" && (
@@ -481,24 +451,23 @@ export default function App() {
             {isAdmin ? (
               <BlankVouchersPrint
                 onBack={() => setActiveTab("form")}
-                onRequireAdminAuth={executeWithAdminAuth}
               />
             ) : (
               <div className="bg-white p-8 rounded-xl border border-slate-200 shadow-sm text-center space-y-4 max-w-md mx-auto my-12">
                 <div className="w-12 h-12 bg-amber-100 text-amber-700 rounded-full flex items-center justify-center mx-auto">
                   <Lock className="w-6 h-6" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800">Admin Authentication Required</h3>
+                  <h3 className="text-lg font-bold text-slate-800">Administrator approval required</h3>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Downloading or printing blank vouchers is restricted to authorized administrators only.
+                  Downloading or printing blank vouchers is restricted to administrator accounts.
                 </p>
                 <button
                   type="button"
-                  onClick={() => executeWithAdminAuth(() => setActiveTab("blank"))}
+                  onClick={() => setActiveTab("form")}
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-lg shadow-sm transition inline-flex items-center gap-2 cursor-pointer"
                 >
                   <Lock className="w-4 h-4" />
-                  Authenticate as Admin
+                  Return to collection entry
                 </button>
               </div>
             )}
@@ -523,16 +492,6 @@ export default function App() {
           />
         ) : null}
       </div>
-
-      {/* Admin Passcode Authentication Modal */}
-      <AdminLoginModal
-        isOpen={isAdminModalOpen}
-        onClose={() => {
-          setIsAdminModalOpen(false);
-          setPendingAdminAction(null);
-        }}
-        onSuccess={handleAdminAuthSuccess}
-      />
 
       {/* Receipt Authenticity Verification Modal */}
       <ReceiptVerificationModal

@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { downloadReceiptAsPng } from "../lib/recordsStore";
-import { isAdminLoggedIn } from "../lib/adminAuth";
 import { Printer, FileText, ArrowLeft, Image } from "lucide-react";
 
 interface BlankVouchersPrintProps {
   onBack?: () => void;
-  onRequireAdminAuth?: (action: () => void) => void;
 }
 
 interface SingleBlankCopyProps {
@@ -163,7 +161,7 @@ const SingleBlankCopy: React.FC<SingleBlankCopyProps> = ({ copyType, voucherNumS
   );
 };
 
-export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, onRequireAdminAuth }) => {
+export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack }) => {
   const [quantity, setQuantity] = useState<number>(1);
   const [isCustomQuantity, setIsCustomQuantity] = useState<boolean>(false);
   const [includeVoucherNum, setIncludeVoucherNum] = useState<boolean>(true);
@@ -176,13 +174,7 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
       window.print();
     };
 
-    if (isAdminLoggedIn()) {
-      doPrint();
-    } else if (onRequireAdminAuth) {
-      onRequireAdminAuth(doPrint);
-    } else {
-      alert("Admin authentication is required to print blank vouchers.");
-    }
+    doPrint();
   };
 
   const handleDownloadPng = () => {
@@ -196,13 +188,7 @@ export const BlankVouchersPrint: React.FC<BlankVouchersPrintProps> = ({ onBack, 
       }
     };
 
-    if (isAdminLoggedIn()) {
-      doDownload();
-    } else if (onRequireAdminAuth) {
-      onRequireAdminAuth(doDownload);
-    } else {
-      alert("Admin authentication is required to download blank vouchers.");
-    }
+    doDownload();
   };
 
   return (

@@ -70,7 +70,7 @@ export const PrintableReport: React.FC<PrintableReportProps> = ({
           <img 
             src="/logo.png" 
             alt="AAER Logo" 
-            className="w-20 h-20 object-contain select-none" 
+            className="w-30 h-30 object-contain select-none" 
           />
           <div>
             <h1 className="text-base font-bold text-slate-900 leading-tight">

@@ -8,12 +8,14 @@ interface RecordsHistoryProps {
   onPrintRecord: (record: ReceiptRecord) => void;
   onPrintReport?: (records: ReceiptRecord[], filterLabel: string) => void;
   refreshTrigger?: number;
+  canAdminister?: boolean;
 }
 
 export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
   onPrintRecord,
   onPrintReport,
   refreshTrigger = 0,
+  canAdminister = false,
 }) => {
   const [records, setRecords] = useState<ReceiptRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -264,14 +266,6 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
           >
             <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${loading ? "animate-spin" : ""}`} />
             Refresh
-          </button>
-
-          <button
-            type="button"
-            onClick={exportToCSV}
-            disabled={records.length === 0}
-            className="px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-md text-xs font-semibold flex items-center gap-1.5 transition disabled:opacity-40 cursor-pointer"
-          >
             <Download className="w-3.5 h-3.5" />
             Export CSV
           </button>
@@ -606,14 +600,16 @@ export const RecordsHistory: React.FC<RecordsHistoryProps> = ({
                         <Printer className="w-3 h-3" />
                         Print
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDelete(r.id)}
-                        className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                        title="Delete Record"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      {canAdminister && (
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(r.id)}
+                          className="p-1 text-slate-400 hover:text-rose-600 transition cursor-pointer"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                       {emailMessages[r.id] && (
                         <div className={`text-[10px] mt-1 ${emailMessages[r.id].startsWith("Sent") ? "text-emerald-600" : "text-rose-600"}`}>
                           {emailMessages[r.id]}

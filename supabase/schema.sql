@@ -5,18 +5,87 @@ create table if not exists public.approved_users (
   email text not null default '',
   full_name text not null default '',
   approved boolean not null default false,
+  is_admin boolean not null default false,
   created_at timestamptz not null default timezone('utc', now())
 );
+
+alter table public.approved_users
+  add column if not exists is_admin boolean not null default false;
 
 alter table public.approved_users enable row level security;
 
 drop policy if exists "Users can read their approval" on public.approved_users;
+drop policy if exists "Administrators can read accounts" on public.approved_users;
+drop policy if exists "Users can create their pending account" on public.approved_users;
+drop policy if exists "Administrators can update accounts" on public.approved_users;
 
 create policy "Users can read their approval"
   on public.approved_users
   for select
   to authenticated
   using (user_id = auth.uid());
+
+create or replace function public.is_current_user_admin()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.approved_users
+    where user_id = auth.uid() and approved = true and is_admin = true
+  );
+$$;
+
+create policy "Administrators can read accounts"
+  on public.approved_users
+  for select
+  to authenticated
+  using (public.is_current_user_admin());
+
+create policy "Users can create their pending account"
+  on public.approved_users
+  for insert
+  to authenticated
+  with check (user_id = auth.uid() and approved = false and is_admin = false);
+
+revoke update on table public.approved_users from authenticated;
+grant update (approved, full_name) on table public.approved_users to authenticated;
+
+create policy "Administrators can update accounts"
+  on public.approved_users
+  for update
+  to authenticated
+  using (public.is_current_user_admin())
+  with check (public.is_current_user_admin());
+
+create or replace function public.create_pending_approved_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.approved_users (user_id, email, full_name, approved, is_admin)
+  values (
+    new.id,
+    coalesce(new.email, ''),
+    coalesce(new.raw_user_meta_data ->> 'full_name', ''),
+    false,
+    false
+  )
+  on conflict (user_id) do update set
+    email = excluded.email,
+    full_name = case when public.approved_users.full_name = '' then excluded.full_name else public.approved_users.full_name end;
+  return new;
+end;
+$$;
+
+drop trigger if exists create_pending_approved_user on auth.users;
+create trigger create_pending_approved_user
+  after insert on auth.users
+  for each row execute function public.create_pending_approved_user();
 
 create table if not exists public.receipts (
   id text primary key default (
@@ -43,17 +112,26 @@ create table if not exists public.receipts (
 
 alter table public.receipts enable row level security;
 
-drop policy if exists "Public receipt access" on public.receipts;
 drop policy if exists "Authenticated receipt access" on public.receipts;
+drop policy if exists "Approved users can read receipts" on public.receipts;
+drop policy if exists "Approved users can create receipts" on public.receipts;
+drop policy if exists "Administrators can update receipts" on public.receipts;
+drop policy if exists "Administrators can delete receipts" on public.receipts;
 
-create policy "Authenticated receipt access"
+create policy "Approved users can read receipts"
   on public.receipts
-  for all
+  for select
   to authenticated
   using (exists (
     select 1 from public.approved_users
     where user_id = auth.uid() and approved = true
   ))
+;
+
+create policy "Approved users can create receipts"
+  on public.receipts
+  for insert
+  to authenticated
   with check (
     exists (
       select 1 from public.approved_users
@@ -61,6 +139,19 @@ create policy "Authenticated receipt access"
     )
     and (auth_user_id = auth.uid() or auth_user_id is null)
   );
+
+create policy "Administrators can update receipts"
+  on public.receipts
+  for update
+  to authenticated
+  using (public.is_current_user_admin())
+  with check (public.is_current_user_admin());
+
+create policy "Administrators can delete receipts"
+  on public.receipts
+  for delete
+  to authenticated
+  using (public.is_current_user_admin());
 
 create index if not exists receipts_issued_at_idx on public.receipts (issued_at desc);
 

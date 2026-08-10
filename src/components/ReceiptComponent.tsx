@@ -31,7 +31,7 @@ const SingleReceiptCopy: React.FC<SingleReceiptProps> = ({
           <img 
             src="/logo.png" 
             alt="AAER Logo" 
-            className="w-20 h-20 object-contain select-none" 
+            className="w-30 h-30 object-contain select-none" 
           />
         </div>
 

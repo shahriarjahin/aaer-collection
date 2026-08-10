@@ -208,6 +208,34 @@ export async function deleteRecord(id: string): Promise<boolean> {
   return true;
 }
 
+export async function updateRecord(id: string, changes: Partial<ReceiptRecord>): Promise<ReceiptRecord> {
+  const databaseChanges = {
+    name: changes.name,
+    organization: changes.organization,
+    membership_nature: changes.membershipNature,
+    email: changes.email,
+    phone: changes.phone,
+    amount: changes.amount === undefined ? undefined : Number(changes.amount),
+    number_of_persons: changes.numberOfPersons === undefined ? undefined : Number(changes.numberOfPersons),
+    amount_in_words: changes.amountInWords,
+    payment_method: changes.paymentMethod,
+    cheque_number_and_date: changes.chequeNumberAndDate,
+    bank_name: changes.bankName,
+    remarks: changes.remarks,
+    received_by: changes.receivedBy,
+  };
+  const { data, error } = await requireSupabase()
+    .from("receipts")
+    .update(Object.fromEntries(Object.entries(databaseChanges).filter(([, value]) => value !== undefined)))
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) throw error;
+  const updatedRecord = mapDatabaseRecord(data);
+  setCachedRecords(getCachedRecords().map((record) => record.id === id ? updatedRecord : record));
+  return updatedRecord;
+}
+
 /**
  * Generates and downloads a high-resolution PNG file from any given HTML element ref/node.
  */

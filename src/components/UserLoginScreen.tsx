@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { LockKeyhole, LogIn } from "lucide-react";
-import { signInWithPassword } from "../lib/auth";
+import { LockKeyhole, LogIn, UserPlus } from "lucide-react";
+import { signInWithPassword, signUpWithPassword } from "../lib/auth";
 
 export const UserLoginScreen: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [isSignUp, setIsSignUp] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -16,9 +18,17 @@ export const UserLoginScreen: React.FC = () => {
 
     setIsSubmitting(true);
     try {
-      const result = await signInWithPassword(email.trim(), password);
+      const result = isSignUp
+        ? await signUpWithPassword(email.trim(), password, fullName)
+        : await signInWithPassword(email.trim(), password);
 
       if (result.error) throw result.error;
+      if (isSignUp) {
+        setMessage(result.data.session
+          ? "Your account was created and is waiting for administrator approval."
+          : "Sign-up received. Check your email, then wait for an administrator to approve your account.");
+        setPassword("");
+      }
     } catch (authError: any) {
       setError(authError.message || "Authentication failed. Please try again.");
     } finally {
@@ -37,11 +47,18 @@ export const UserLoginScreen: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <h2 className="text-base font-bold text-slate-900">Approved user sign in</h2>
+            <h2 className="text-base font-bold text-slate-900">{isSignUp ? "Request an account" : "Approved user sign in"}</h2>
             <p className="text-xs text-slate-500 mt-1">
-              Your account name will be printed automatically in the “Received by” field.
+              {isSignUp ? "An administrator must approve your account before you can sign in." : "Your account name will be printed automatically in the Received by field."}
             </p>
           </div>
+
+          {isSignUp && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Full name</label>
+              <input type="text" value={fullName} onChange={(event) => setFullName(event.target.value)} required autoComplete="name" className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500" />
+            </div>
+          )}
 
           <div>
             <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
@@ -63,7 +80,7 @@ export const UserLoginScreen: React.FC = () => {
               onChange={(event) => setPassword(event.target.value)}
               required
               minLength={6}
-              autoComplete="current-password"
+              autoComplete={isSignUp ? "new-password" : "current-password"}
               className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
             />
           </div>
@@ -76,8 +93,12 @@ export const UserLoginScreen: React.FC = () => {
             disabled={isSubmitting}
             className="w-full px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
           >
-            <LogIn className="w-4 h-4" />
-            {isSubmitting ? "Please wait..." : "Sign in"}
+            {isSignUp ? <UserPlus className="w-4 h-4" /> : <LogIn className="w-4 h-4" />}
+            {isSubmitting ? "Please wait..." : isSignUp ? "Request sign up" : "Sign in"}
+          </button>
+
+          <button type="button" onClick={() => { setIsSignUp((value) => !value); setError(null); setMessage(null); }} className="w-full text-xs text-indigo-600 hover:text-indigo-800 font-semibold">
+            {isSignUp ? "Already have an account? Sign in" : "Need an account? Sign up"}
           </button>
 
           <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-400">

@@ -15,14 +15,11 @@ An official, secure full-stack web application designed for the **Alumni Associa
   * Payment Methods (Cash, bKash, Nagad, Bank Transfer, Cheque) & Transaction Reference ID
 * **Print-Optimized Voucher**: A4 receipt layout complete with official organization header, logo, QR code, and treasurer signature.
 
-### 2. 🔐 Approved User Authentication
-* **Supabase Auth Login**: Users must sign in before entering or issuing receipts.
-* **Approval Required**: Only users listed in `public.approved_users` with `approved = true` can create or access receipt records.
-* **Admin Passcode**: The separate Admin PIN protects restricted actions such as reports, deletion, and blank-voucher printing.
-* **Default Passcode**: `1234`
-* **Passcode Customization**:
-  * **Via UI**: Click **Admin Login** in the top navigation bar, enter the current PIN, and select **Change Passcode?** to set a new PIN.
-  * **Via Code**: Change `DEFAULT_PIN` in `src/lib/adminAuth.ts`.
+### 2. 🔐 Approved User Authentication and Administration
+* **Supabase Auth Sign-up**: Anyone can request an account with their name, email, and password.
+* **Approval Required**: New accounts remain pending and cannot enter the collection portal until an administrator approves them.
+* **Administrator Account**: The `is_admin` flag in `public.approved_users` controls administrator access. There is no browser-local admin PIN.
+* **Administrator Workspace**: Administrators can approve pending accounts, edit account names, correct receipt data, delete receipts, print reports, and print blank vouchers.
 
 ### 3. 🔍 QR Code Authenticity Verification
 * **Embedded QR Code**: Every printed receipt features a unique QR code pointing to the online verification endpoint (`?verifyId=REC-2026-XXXX`).
@@ -110,6 +107,16 @@ VITE_SUPABASE_ANON_KEY="your-anon-key"
 ```
 
 The SQL file enables RLS for approved receipt users and creates a restricted public verification function. Do not put a Supabase service-role key in any `VITE_` variable.
+
+After running the schema, create the first administrator manually in the Supabase SQL Editor. Replace the UUID with the Auth user ID of the administrator account:
+
+```sql
+update public.approved_users
+set approved = true, is_admin = true
+where user_id = 'ADMIN_AUTH_USER_UUID';
+```
+
+Only an administrator can approve subsequent sign-ups or edit account and receipt data from the Administrator workspace. Keep `is_admin` changes restricted to the Supabase database table.
 
 ## ✉️ Configure Resend Email
 
