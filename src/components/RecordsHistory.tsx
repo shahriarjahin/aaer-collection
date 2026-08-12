@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ReceiptRecord } from "../types";
 import { getRecords, deleteRecord, downloadReceiptAsPng, sendReceiptEmail } from "../lib/recordsStore";
 import { ReceiptComponent } from "./ReceiptComponent";

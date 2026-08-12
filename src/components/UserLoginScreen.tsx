@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { LockKeyhole, LogIn, UserPlus } from "lucide-react";
 import { signInWithPassword, signUpWithPassword } from "../lib/auth";
 

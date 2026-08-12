@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { downloadReceiptAsPng } from "../lib/recordsStore";
 import { Printer, FileText, ArrowLeft, Image } from "lucide-react";
 

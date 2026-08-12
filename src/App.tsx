@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { DataEntryForm } from "./components/DataEntryForm";
 import { ReceiptComponent } from "./components/ReceiptComponent";
 import { RecordsHistory } from "./components/RecordsHistory";
@@ -147,7 +147,7 @@ export default function App() {
         };
       });
     } else {
-      setDraftReceipt((prev) => (prev === null ? null : null));
+      setDraftReceipt(null);
     }
   }, [activeReceiptId, currentUser]);
 

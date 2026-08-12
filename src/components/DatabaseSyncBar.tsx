@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, Database, RefreshCw, AlertCircle } from "lucide-react";
 import { isSupabaseConfigured } from "../lib/supabase";
 

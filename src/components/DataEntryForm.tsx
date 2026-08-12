@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ReceiptFormData, MembershipNature, PaymentMethod, ReceiptRecord } from "../types";
 import { numberToWords } from "../utils/numberToWords";
 import { saveRecord } from "../lib/recordsStore";

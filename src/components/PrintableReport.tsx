@@ -1,4 +1,3 @@
-import React from "react";
 import { ReceiptRecord } from "../types";
 
 interface PrintableReportProps {
